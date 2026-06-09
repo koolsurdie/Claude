@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IntelliBoard — AI Storyboard Builder</title>
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Mammoth (DOCX parsing) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+  <!-- docx (Word export) -->
+  <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+  <!-- SheetJS (Excel export) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --accent: #FF7900;
+      --muted: #888;
+      --black: #000;
+      --white: #fff;
+    }
+    * { box-sizing: border-box; border-radius: 0 !important; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; color: #000; }
+
+    /* Buttons */
+    .btn         { background: #FF7900; color: #fff; border: none; padding: 0.5rem 1.2rem; font-weight: 600; font-family: inherit; cursor: pointer; font-size: 0.9rem; display: inline-block; }
+    .btn:hover   { opacity: 0.85; }
+    .btn-outline { background: transparent; border: 1.5px solid #000; color: #000; padding: 0.5rem 1.2rem; font-weight: 600; font-family: inherit; cursor: pointer; font-size: 0.9rem; display: inline-block; }
+    .btn-outline:hover { background: #000; color: #fff; }
+    .btn:disabled, .btn-outline:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-sm { padding: 0.3rem 0.8rem; font-size: 0.8rem; }
+
+    /* Inputs */
+    input, select, textarea {
+      border: 1.5px solid #000; padding: 0.45rem 0.65rem;
+      font-family: inherit; font-size: 0.9rem; width: 100%; outline: none; background: #fff;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #FF7900; }
+    label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.3rem; }
+
+    /* Layout */
+    #sidebar {
+      position: fixed; left: 0; top: 0; width: 220px; height: 100vh;
+      background: #000; color: #fff;
+      display: flex; flex-direction: column;
+      z-index: 100;
+    }
+    #main {
+      margin-left: 220px; padding: 2rem; min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar-logo {
+      padding: 1.5rem 1.2rem 1rem;
+      font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em;
+      border-bottom: 1px solid #222;
+    }
+    .sidebar-logo span { color: #FF7900; }
+    .sidebar-nav { flex: 1; padding: 1rem 0; }
+    .nav-section-label {
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #555; padding: 0.5rem 1.2rem 0.3rem;
+    }
+    .nav-link {
+      display: block; padding: 0.55rem 1.2rem;
+      color: #ccc; text-decoration: none; font-size: 0.875rem;
+      cursor: pointer; border-left: 3px solid transparent;
+      transition: background 0.1s;
+    }
+    .nav-link:hover { color: #fff; background: #111; }
+    .nav-link.active { color: #fff; border-left-color: #FF7900; background: rgba(255,121,0,0.08); }
+    .sidebar-bottom {
+      padding: 1rem 1.2rem; border-top: 1px solid #222;
+    }
+    .api-key-btn {
+      background: none; border: none; color: #888; cursor: pointer;
+      font-family: inherit; font-size: 0.875rem; padding: 0;
+      display: flex; align-items: center; gap: 0.4rem; width: 100%;
+    }
+    .api-key-btn:hover { color: #fff; }
+    .api-key-form { margin-top: 0.75rem; }
+    .api-key-form input { background: #111; color: #fff; border-color: #444; font-size: 0.8rem; }
+    .api-key-form input:focus { border-color: #FF7900; }
+    .api-key-status { font-size: 0.72rem; color: #888; margin-top: 0.4rem; }
+    .api-key-status.set { color: #4caf50; }
+
+    /* Status badges */
+    .badge {
+      display: inline-block; font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.2rem 0.5rem;
+    }
+    .badge-draft     { background: #888; color: #fff; }
+    .badge-in_review { background: #000; color: #fff; border: 1px solid #555; }
+    .badge-approved  { background: #FF7900; color: #fff; }
+    .badge-exported  { background: #fff; color: #000; border: 1.5px solid #888; }
+
+    /* Project cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem; margin-top: 1.5rem;
+    }
+    .project-card {
+      border: 1.5px solid #000; padding: 1.25rem; cursor: pointer;
+      transition: box-shadow 0.12s;
+    }
+    .project-card:hover { box-shadow: 4px 4px 0 #FF7900; }
+    .card-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; }
+    .card-meta { font-size: 0.78rem; color: #555; margin-top: 0.5rem; line-height: 1.6; }
+    .card-meta strong { color: #000; }
+
+    /* Page headers */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1.5px solid #000;
+    }
+    .page-header h1 { font-size: 1.6rem; font-weight: 800; }
+
+    /* Forms */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .radio-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .radio-label {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.875rem; font-weight: 400; text-transform: none;
+      letter-spacing: 0; cursor: pointer;
+    }
+    .radio-label input[type="radio"] { width: auto; }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed #888; padding: 2rem; text-align: center;
+      cursor: pointer; transition: border-color 0.15s;
+      position: relative;
+    }
+    .upload-zone.drag-over { border-color: #FF7900; }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-zone .upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .upload-zone .upload-text { font-size: 0.875rem; color: #555; }
+    .upload-zone .upload-text strong { color: #000; }
+    .file-selected { margin-top: 0.75rem; font-size: 0.85rem; color: #000; font-weight: 600; }
+    .file-size { font-weight: 400; color: #555; }
+
+    /* Status messages */
+    .status-bar {
+      padding: 0.75rem 1rem; margin: 1rem 0;
+      border-left: 3px solid #FF7900; background: #fff8f3;
+      font-size: 0.875rem; display: none;
+    }
+    .status-bar.visible { display: block; }
+    .status-bar.error { border-left-color: #cc0000; background: #fff3f3; color: #cc0000; }
+    .status-bar.success { border-left-color: #4caf50; background: #f3fff5; color: #2e7d32; }
+
+    /* Screen list */
+    .screens-header {
+      display: grid;
+      grid-template-columns: 50px 140px 1fr 1fr 100px;
+      gap: 0.5rem;
+      background: #000; color: #fff;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .screen-row {
+      border: 1.5px solid #000; border-top: none;
+    }
+    .screen-row-collapsed {
+      display: grid;
+      grid-template-columns: 50px 140px 1fr 1fr 100px;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      cursor: pointer; align-items: center;
+      font-size: 0.875rem;
+    }
+    .screen-row-collapsed:hover { background: #f9f9f9; }
+    .screen-num { font-weight: 800; color: #FF7900; }
+    .screen-type-tag {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      padding: 0.15rem 0.4rem; background: #f0f0f0;
+    }
+    .screen-text-preview { color: #333; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .screen-row-expanded {
+      padding: 1.5rem; border-top: 1.5px solid #eee; background: #fafafa;
+    }
+    .expanded-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .expanded-col .form-group { margin-bottom: 1rem; }
+    .quiz-section {
+      grid-column: 1 / -1;
+      border-top: 1.5px solid #ddd; padding-top: 1rem; margin-top: 0.5rem;
+    }
+    .quiz-section h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .save-row { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1rem; }
+    .saved-msg { font-size: 0.82rem; color: #4caf50; font-weight: 600; display: none; }
+    .saved-msg.show { display: block; }
+
+    /* Collapsible re-generate */
+    .collapsible-header {
+      display: flex; align-items: center; gap: 0.5rem;
+      cursor: pointer; padding: 0.75rem 1rem;
+      background: #f5f5f5; border: 1.5px solid #ddd;
+      font-size: 0.875rem; font-weight: 600;
+      margin-bottom: 0;
+    }
+    .collapsible-header:hover { background: #eee; }
+    .collapsible-body {
+      border: 1.5px solid #ddd; border-top: none;
+      padding: 1.25rem; display: none;
+      margin-bottom: 1.5rem;
+    }
+    .collapsible-body.open { display: block; }
+
+    /* Export dropdown */
+    .export-dropdown { position: relative; display: inline-block; }
+    .export-menu {
+      position: absolute; top: 100%; right: 0; min-width: 200px;
+      background: #fff; border: 1.5px solid #000;
+      z-index: 50; display: none;
+    }
+    .export-menu.open { display: block; }
+    .export-menu-item {
+      display: block; padding: 0.6rem 1rem;
+      font-size: 0.875rem; cursor: pointer; color: #000;
+      border-bottom: 1px solid #eee;
+    }
+    .export-menu-item:last-child { border-bottom: none; }
+    .export-menu-item:hover { background: #f5f5f5; }
+
+    /* Project header */
+    .project-header {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 2rem; flex-wrap: wrap;
+    }
+    .project-header h1 { font-size: 1.5rem; font-weight: 800; flex: 1; }
+    .back-btn {
+      background: none; border: none; cursor: pointer; font-size: 1.2rem;
+      color: #000; padding: 0.2rem 0.4rem;
+    }
+    .back-btn:hover { color: #FF7900; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 4rem 2rem; color: #888;
+    }
+    .empty-state h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: #000; }
+    .empty-state p { font-size: 0.875rem; margin-bottom: 1.5rem; }
+
+    /* Divider */
+    .divider { height: 1.5px; background: #eee; margin: 1.5rem 0; }
+
+    /* Tooltip / inline status */
+    .inline-status {
+      font-size: 0.8rem; color: #555; margin-top: 0.5rem;
+    }
+
+    /* New project form card */
+    .form-card {
+      max-width: 680px;
+      border: 1.5px solid #000; padding: 2rem;
+    }
+    .form-card h2 { font-size: 1.2rem; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1.5px solid #eee; }
+    .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+
+    /* Generating overlay */
+    .generating-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999; display: none;
+    }
+    .generating-overlay.visible { display: flex; }
+    .generating-card {
+      background: #fff; padding: 2rem 2.5rem; min-width: 320px;
+      border: 2px solid #FF7900; text-align: center;
+    }
+    .generating-card h3 { margin-bottom: 0.5rem; }
+    .generating-card p { font-size: 0.875rem; color: #555; }
+    .spinner {
+      width: 32px; height: 32px; border: 3px solid #eee;
+      border-top-color: #FF7900; border-radius: 50% !important;
+      animation: spin 0.8s linear infinite; margin: 1rem auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      #sidebar { width: 100%; height: auto; position: relative; flex-direction: row; flex-wrap: wrap; }
+      #main { margin-left: 0; }
+      .screens-header, .screen-row-collapsed { grid-template-columns: 40px 100px 1fr 80px; }
+      .screens-header span:nth-child(4), .screen-row-collapsed span:nth-child(4) { display: none; }
+      .expanded-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Language tag */
+    .lang-tag {
+      font-size: 0.7rem; font-weight: 700; background: #f0f0f0;
+      padding: 0.15rem 0.45rem; margin-left: 0.4rem; color: #555;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Generating overlay -->
+<div id="generatingOverlay" class="generating-overlay">
+  <div class="generating-card">
+    <h3>Generating Storyboard</h3>
+    <div class="spinner"></div>
+    <p id="overlayStatus">Sending to Claude...</p>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="sidebar-logo">Intelli<span>Board</span></div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Navigation</div>
+    <a class="nav-link" id="nav-dashboard" onclick="navigate('#dashboard')">&#9632; Projects</a>
+    <a class="nav-link" id="nav-new" onclick="navigate('#new')">+ New Project</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="api-key-btn" onclick="toggleApiKeyForm()">
+      <span>&#9881;</span> API Key
+    </button>
+    <div id="apiKeyForm" class="api-key-form" style="display:none;">
+      <div style="margin-bottom:0.4rem;">
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" />
+      </div>
+      <button class="btn btn-sm" onclick="saveApiKey()" style="width:100%;margin-bottom:0.4rem;">Save Key</button>
+      <div id="apiKeyStatus" class="api-key-status"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Main content -->
+<div id="main">
+  <div id="view"></div>
+</div>
+
+<script>
+// ─── PDF.js worker ────────────────────────────────────────────────────────────
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ─── Storage helpers ──────────────────────────────────────────────────────────
+function loadProjects() {
+  try { return JSON.parse(localStorage.getItem('intelliboard_projects') || '[]'); }
+  catch { return []; }
+}
+function saveProjects(arr) {
+  localStorage.setItem('intelliboard_projects', JSON.stringify(arr));
+}
+function getProject(id) {
+  return loadProjects().find(p => p.id === id) || null;
+}
+function saveProject(proj) {
+  proj.updated_at = new Date().toISOString();
+  const arr = loadProjects();
+  const idx = arr.findIndex(p => p.id === proj.id);
+  if (idx >= 0) arr[idx] = proj; else arr.push(proj);
+  saveProjects(arr);
+}
+function getApiKey() {
+  return localStorage.getItem('intelliboard_api_key') || '';
+}
+
+// ─── API Key UI ───────────────────────────────────────────────────────────────
+function toggleApiKeyForm() {
+  const form = document.getElementById('apiKeyForm');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  if (form.style.display === 'block') {
+    const key = getApiKey();
+    document.getElementById('apiKeyInput').value = key;
+    updateApiKeyStatus();
+  }
+}
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (val) {
+    localStorage.setItem('intelliboard_api_key', val);
+    updateApiKeyStatus();
+    setTimeout(() => { document.getElementById('apiKeyForm').style.display = 'none'; }, 800);
+  }
+}
+function updateApiKeyStatus() {
+  const el = document.getElementById('apiKeyStatus');
+  const key = getApiKey();
+  if (key) {
+    el.textContent = 'Key saved (' + key.slice(0, 10) + '...)';
+    el.className = 'api-key-status set';
+  } else {
+    el.textContent = 'No key set';
+    el.className = 'api-key-status';
+  }
+}
+
+// Allow pressing Enter to save API key
+document.getElementById('apiKeyInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveApiKey();
+});
+
+// ─── Router ───────────────────────────────────────────────────────────────────
+function navigate(hash) {
+  window.location.hash = hash;
+}
+
+function router() {
+  const hash = window.location.hash || '#dashboard';
+  const view = document.getElementById('view');
+
+  // Update nav active state
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  if (hash === '#dashboard' || hash === '') {
+    document.getElementById('nav-dashboard').classList.add('active');
+    renderDashboard(view);
+  } else if (hash === '#new') {
+    document.getElementById('nav-new').classList.add('active');
+    renderNewProject(view);
+  } else if (hash.startsWith('#project/')) {
+    const id = hash.replace('#project/', '');
+    renderProject(view, id);
+  } else {
+    renderDashboard(view);
+  }
+}
+
+window.addEventListener('hashchange', router);
+window.addEventListener('load', () => { updateApiKeyStatus(); router(); });
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function renderDashboard(container) {
+  const projects = loadProjects();
+
+  let html = `<div class="page-header">
+    <h1>Projects</h1>
+    <button class="btn" onclick="navigate('#new')">+ New Project</button>
+  </div>`;
+
+  if (!projects.length) {
+    html += `<div class="empty-state">
+      <h3>No projects yet</h3>
+      <p>Create your first storyboard project to get started.</p>
+      <button class="btn" onclick="navigate('#new')">Create your first project</button>
+    </div>`;
+  } else {
+    html += `<div class="cards-grid">`;
+    for (const p of [...projects].sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at))) {
+      const langLabel = p.language === 'both' ? 'EN + FR' : p.language === 'en' ? 'EN' : 'FR';
+      const updated = new Date(p.updated_at).toLocaleDateString('en-CA');
+      html += `<div class="project-card" onclick="navigate('#project/${p.id}')">
+        <div class="card-name">${esc(p.name)}</div>
+        <span class="badge badge-${p.status}">${p.status.replace('_',' ')}</span>
+        <div class="card-meta">
+          <div><strong>Owner:</strong> ${esc(p.owner)}</div>
+          <div><strong>Language:</strong> ${langLabel} &nbsp; <strong>Screens:</strong> ${p.screens.length}</div>
+          <div><strong>Updated:</strong> ${updated}</div>
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+// ─── New Project ──────────────────────────────────────────────────────────────
+function renderNewProject(container) {
+  container.innerHTML = `
+  <div class="page-header">
+    <h1>New Project</h1>
+  </div>
+  <div class="form-card">
+    <h2>Project Details</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="projName">Project Name *</label>
+        <input type="text" id="projName" placeholder="e.g. Onboarding Module Q3" oninput="checkNewFormReady()" />
+      </div>
+      <div class="form-group">
+        <label for="projOwner">Owner *</label>
+        <input type="text" id="projOwner" placeholder="Your name or team" oninput="checkNewFormReady()" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Language Output</label>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="lang" value="both" checked /> EN + FR (Bilingual)
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="lang" value="en" /> English only
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="lang" value="fr" /> French only
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Source Document (optional)</label>
+      <div class="upload-zone" id="newUploadZone"
+        ondragover="handleDragOver(event,'newUploadZone')"
+        ondragleave="handleDragLeave(event,'newUploadZone')"
+        ondrop="handleDrop(event,'newUploadZone','newFileInput')">
+        <input type="file" id="newFileInput" accept=".pdf,.docx,.doc,.pptx,.ppt,.txt"
+          onchange="handleFileSelect('newFileInput','newUploadZone','newFileInfo')" />
+        <div class="upload-icon">&#128196;</div>
+        <div class="upload-text"><strong>Drag &amp; drop</strong> or click to browse</div>
+        <div class="upload-text" style="margin-top:0.3rem;">PDF, DOCX, DOC, PPTX, TXT</div>
+        <div id="newFileInfo" class="file-selected" style="display:none;"></div>
+      </div>
+    </div>
+    <div id="newStatusBar" class="status-bar"></div>
+    <div class="form-actions">
+      <button class="btn" id="createBtn" onclick="submitNewProject()" disabled>Create &amp; Generate</button>
+      <button class="btn-outline" onclick="navigate('#dashboard')">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function handleDragOver(e, zoneId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.add('drag-over');
+}
+function handleDragLeave(e, zoneId) {
+  document.getElementById(zoneId).classList.remove('drag-over');
+}
+function handleDrop(e, zoneId, inputId) {
+  e.preventDefault();
+  document.getElementById(zoneId).classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length) {
+    const input = document.getElementById(inputId);
+    // Assign files to the input
+    const dt = new DataTransfer();
+    dt.items.add(files[0]);
+    input.files = dt.files;
+    const infoId = inputId.replace('FileInput','FileInfo');
+    handleFileSelect(inputId, zoneId, infoId);
+  }
+}
+function handleFileSelect(inputId, zoneId, infoId) {
+  const input = document.getElementById(inputId);
+  const info = document.getElementById(infoId);
+  if (input.files && input.files[0]) {
+    const f = input.files[0];
+    const size = f.size > 1024*1024
+      ? (f.size/(1024*1024)).toFixed(1) + ' MB'
+      : (f.size/1024).toFixed(0) + ' KB';
+    info.style.display = 'block';
+    info.innerHTML = `&#128196; ${esc(f.name)} <span class="file-size">(${size})</span>`;
+  }
+}
+function checkNewFormReady() {
+  const name = (document.getElementById('projName')?.value || '').trim();
+  const owner = (document.getElementById('projOwner')?.value || '').trim();
+  const btn = document.getElementById('createBtn');
+  if (btn) btn.disabled = !(name && owner);
+}
+
+async function submitNewProject() {
+  const name = document.getElementById('projName').value.trim();
+  const owner = document.getElementById('projOwner').value.trim();
+  const lang = document.querySelector('input[name="lang"]:checked')?.value || 'both';
+  const fileInput = document.getElementById('newFileInput');
+  const file = fileInput.files[0] || null;
+  const statusBar = document.getElementById('newStatusBar');
+
+  if (!name || !owner) return;
+
+  const apiKey = getApiKey();
+
+  // Create project
+  const proj = {
+    id: crypto.randomUUID(),
+    name, owner, language: lang,
+    status: 'draft',
+    source_filename: file ? file.name : null,
+    extracted_text: null,
+    screens: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  if (!file) {
+    saveProject(proj);
+    navigate('#project/' + proj.id);
+    return;
+  }
+
+  if (!apiKey) {
+    showStatus(statusBar, 'error', 'Please set your Anthropic API key first (click ⚙ API Key in the sidebar).');
+    return;
+  }
+
+  // Disable button
+  document.getElementById('createBtn').disabled = true;
+  showStatus(statusBar, '', 'Parsing document...');
+  showOverlay('Parsing document...');
+
+  try {
+    const text = await parseFile(file);
+    proj.extracted_text = text;
+
+    showOverlay('Generating storyboard with Claude...');
+    showStatus(statusBar, '', 'Generating storyboard with Claude...');
+
+    const screens = await generateWithClaude(text, lang, apiKey);
+    proj.screens = screens;
+
+    saveProject(proj);
+    hideOverlay();
+    showStatus(statusBar, 'success', 'Done! Navigating to your project...');
+    setTimeout(() => navigate('#project/' + proj.id), 600);
+  } catch (err) {
+    hideOverlay();
+    saveProject(proj); // save even if generation failed
+    showStatus(statusBar, 'error', 'Error: ' + err.message + ' — Project saved without screens.');
+    document.getElementById('createBtn').disabled = false;
+    setTimeout(() => navigate('#project/' + proj.id), 2000);
+  }
+}
+
+// ─── Project View ─────────────────────────────────────────────────────────────
+function renderProject(container, id) {
+  const proj = getProject(id);
+  if (!proj) {
+    container.innerHTML = `<div class="empty-state"><h3>Project not found</h3><button class="btn" onclick="navigate('#dashboard')">Back to Projects</button></div>`;
+    return;
+  }
+
+  const langLabel = proj.language === 'both' ? 'EN + FR' : proj.language === 'en' ? 'EN only' : 'FR only';
+
+  let html = `
+  <div class="project-header">
+    <button class="back-btn" onclick="navigate('#dashboard')" title="Back">&#8592;</button>
+    <h1>${esc(proj.name)}</h1>
+    <span class="lang-tag">${langLabel}</span>
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-left:auto;">
+      <div>
+        <label style="font-size:0.7rem;margin-bottom:0.2rem;">Status</label>
+        <select id="statusSelect" onchange="updateProjectStatus('${proj.id}', this.value)" style="width:130px;font-size:0.82rem;padding:0.35rem 0.5rem;">
+          <option value="draft" ${proj.status==='draft'?'selected':''}>Draft</option>
+          <option value="in_review" ${proj.status==='in_review'?'selected':''}>In Review</option>
+          <option value="approved" ${proj.status==='approved'?'selected':''}>Approved</option>
+          <option value="exported" ${proj.status==='exported'?'selected':''}>Exported</option>
+        </select>
+      </div>
+      <div class="export-dropdown">
+        <button class="btn-outline" onclick="toggleExportMenu()" id="exportBtn">Export &#9660;</button>
+        <div class="export-menu" id="exportMenu">
+          <div class="export-menu-item" onclick="exportStoryboard('${proj.id}')">&#128196; Storyboard (.docx)</div>
+          <div class="export-menu-item" onclick="exportQuiz('${proj.id}')">&#128200; Quiz Bank (.xlsx)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Re-generate collapsible -->
+  <div class="collapsible-header" onclick="toggleCollapsible('regenBody')">
+    <span>&#8635;</span> Re-generate from new document
+    <span style="margin-left:auto;font-size:0.8rem;color:#888;" id="regenArrow">&#9660;</span>
+  </div>
+  <div class="collapsible-body" id="regenBody">
+    <div class="form-group">
+      <label>Upload New Source Document</label>
+      <div class="upload-zone" id="regenUploadZone"
+        ondragover="handleDragOver(event,'regenUploadZone')"
+        ondragleave="handleDragLeave(event,'regenUploadZone')"
+        ondrop="handleDrop(event,'regenUploadZone','regenFileInput')">
+        <input type="file" id="regenFileInput" accept=".pdf,.docx,.doc,.pptx,.ppt,.txt"
+          onchange="handleFileSelect('regenFileInput','regenUploadZone','regenFileInfo')" />
+        <div class="upload-icon">&#128196;</div>
+        <div class="upload-text"><strong>Drag &amp; drop</strong> or click to browse</div>
+        <div id="regenFileInfo" class="file-selected" style="display:none;"></div>
+      </div>
+    </div>
+    <div id="regenStatusBar" class="status-bar"></div>
+    <button class="btn" onclick="regenProject('${proj.id}')">&#8635; Generate</button>
+  </div>
+  `;
+
+  // Screens
+  if (!proj.screens.length) {
+    html += `<div style="margin-top:1.5rem;">
+      <div class="empty-state" style="border:1.5px solid #000;">
+        <h3>No screens yet</h3>
+        <p>Upload a source document above and click Generate to build your storyboard.</p>
+      </div>
+    </div>`;
+  } else {
+    html += `
+    <div style="margin-top:1.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+        <strong>${proj.screens.length} screen${proj.screens.length!==1?'s':''}</strong>
+        <button class="btn-outline btn-sm" onclick="addScreen('${proj.id}')">+ Add Screen</button>
+      </div>
+      <div class="screens-header">
+        <span>#</span><span>Type</span><span>Narration (EN)</span><span>Narration (FR)</span><span></span>
+      </div>
+      <div id="screenList">`;
+
+    for (let i = 0; i < proj.screens.length; i++) {
+      html += renderScreenRow(proj, i);
+    }
+    html += `</div></div>`;
+  }
+
+  container.innerHTML = html;
+
+  // Close export menu on outside click
+  document.addEventListener('click', closeExportOnOutside);
+}
+
+function renderScreenRow(proj, idx) {
+  const s = proj.screens[idx];
+  const enPreview = (s.narration_en || '').slice(0, 80) + ((s.narration_en || '').length > 80 ? '…' : '');
+  const frPreview = (s.narration_fr || '').slice(0, 80) + ((s.narration_fr || '').length > 80 ? '…' : '');
+
+  const typeOptions = ['title','objective','content','knowledge_check','summary']
+    .map(t => `<option value="${t}" ${s.screen_type===t?'selected':''}>${t.replace('_',' ')}</option>`).join('');
+  const interactionOptions = ['static','click-reveal','quiz','video']
+    .map(t => `<option value="${t}" ${s.interaction_type===t?'selected':''}>${t}</option>`).join('');
+
+  let quizHtml = '';
+  if (s.screen_type === 'knowledge_check') {
+    const q = s.quiz || {};
+    const opts = q.options || ['','','',''];
+    const answerOptions = ['A','B','C','D'].map((l,i) => `<option value="${i}" ${q.answer===i?'selected':''}>${l}</option>`).join('');
+    quizHtml = `<div class="quiz-section">
+      <h4>&#10003; Quiz Content</h4>
+      <div class="quiz-grid" style="margin-bottom:1rem;">
+        <div class="form-group">
+          <label>Question (EN)</label>
+          <textarea rows="2" data-field="quiz_question_en" onchange="markDirty('${proj.id}','${s.id}')">${esc(q.question_en||'')}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Question (FR)</label>
+          <textarea rows="2" data-field="quiz_question_fr" onchange="markDirty('${proj.id}','${s.id}')">${esc(q.question_fr||'')}</textarea>
+        </div>
+      </div>
+      <div class="options-grid" style="margin-bottom:1rem;">
+        ${['A','B','C','D'].map((l,i) => `<div class="form-group">
+          <label>Option ${l}</label>
+          <input type="text" data-field="quiz_option_${i}" value="${esc(opts[i]||'')}" onchange="markDirty('${proj.id}','${s.id}')" />
+        </div>`).join('')}
+      </div>
+      <div class="form-group" style="max-width:200px;">
+        <label>Correct Answer</label>
+        <select data-field="quiz_answer" onchange="markDirty('${proj.id}','${s.id}')">${answerOptions}</select>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="screen-row" id="screen-row-${s.id}">
+    <div class="screen-row-collapsed" onclick="toggleScreen('${s.id}')">
+      <span class="screen-num">${s.screen_number}</span>
+      <span class="screen-type-tag">${(s.screen_type||'').replace('_',' ')}</span>
+      <span class="screen-text-preview">${esc(enPreview)}</span>
+      <span class="screen-text-preview">${esc(frPreview)}</span>
+      <span style="text-align:right;font-size:0.8rem;color:#555;">Edit &#9660;</span>
+    </div>
+    <div class="screen-row-expanded" id="screen-expanded-${s.id}" style="display:none;">
+      <div class="expanded-grid">
+        <div class="expanded-col">
+          <div class="form-group">
+            <label>Screen Type</label>
+            <select data-field="screen_type" onchange="onTypeChange(this,'${proj.id}','${s.id}');markDirty('${proj.id}','${s.id}')">${typeOptions}</select>
+          </div>
+          <div class="form-group">
+            <label>Title (EN)</label>
+            <input type="text" data-field="title_en" value="${esc(s.title_en||'')}" onchange="markDirty('${proj.id}','${s.id}')" />
+          </div>
+          <div class="form-group">
+            <label>Title (FR)</label>
+            <input type="text" data-field="title_fr" value="${esc(s.title_fr||'')}" onchange="markDirty('${proj.id}','${s.id}')" />
+          </div>
+          <div class="form-group">
+            <label>Narration (EN)</label>
+            <textarea rows="4" data-field="narration_en" onchange="markDirty('${proj.id}','${s.id}')">${esc(s.narration_en||'')}</textarea>
+          </div>
+          <div class="form-group">
+            <label>Narration (FR)</label>
+            <textarea rows="4" data-field="narration_fr" onchange="markDirty('${proj.id}','${s.id}')">${esc(s.narration_fr||'')}</textarea>
+          </div>
+        </div>
+        <div class="expanded-col">
+          <div class="form-group">
+            <label>Interaction Type</label>
+            <select data-field="interaction_type" onchange="markDirty('${proj.id}','${s.id}')">${interactionOptions}</select>
+          </div>
+          <div class="form-group">
+            <label>Visual Direction</label>
+            <textarea rows="3" data-field="visual_direction" onchange="markDirty('${proj.id}','${s.id}')">${esc(s.visual_direction||'')}</textarea>
+          </div>
+          <div class="form-group">
+            <label>Synthesia Note</label>
+            <textarea rows="2" data-field="synthesia_note" onchange="markDirty('${proj.id}','${s.id}')">${esc(s.synthesia_note||'')}</textarea>
+          </div>
+          <div class="form-group">
+            <label>Vyond Note</label>
+            <textarea rows="2" data-field="vyond_note" onchange="markDirty('${proj.id}','${s.id}')">${esc(s.vyond_note||'')}</textarea>
+          </div>
+          <div class="form-group">
+            <label>Articulate Note</label>
+            <textarea rows="2" data-field="articulate_note" onchange="markDirty('${proj.id}','${s.id}')">${esc(s.articulate_note||'')}</textarea>
+          </div>
+        </div>
+        ${quizHtml}
+      </div>
+      <div class="save-row">
+        <span class="saved-msg" id="saved-msg-${s.id}">Saved &#10003;</span>
+        <button class="btn-outline btn-sm" style="color:#cc0000;border-color:#cc0000;" onclick="deleteScreen('${proj.id}','${s.id}')">Delete</button>
+        <button class="btn btn-sm" onclick="saveScreen('${proj.id}','${s.id}')">Save</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleScreen(screenId) {
+  const expanded = document.getElementById('screen-expanded-' + screenId);
+  if (!expanded) return;
+  const isOpen = expanded.style.display !== 'none';
+  expanded.style.display = isOpen ? 'none' : 'block';
+}
+
+function markDirty(projId, screenId) {
+  // Visual indicator that unsaved changes exist (optional future enhancement)
+}
+
+function onTypeChange(selectEl, projId, screenId) {
+  // If type changes to knowledge_check, need to re-render the quiz section
+  // We'll just update the screen and save, then refresh the row
+  const row = document.getElementById('screen-row-' + screenId);
+  if (!row) return;
+  const newType = selectEl.value;
+  // Save immediately so quiz section appears
+  saveScreen(projId, screenId, false);
+  // Re-render the row
+  const proj = getProject(projId);
+  if (!proj) return;
+  const idx = proj.screens.findIndex(s => s.id === screenId);
+  if (idx < 0) return;
+  const wasExpanded = document.getElementById('screen-expanded-' + screenId)?.style.display !== 'none';
+  row.outerHTML = renderScreenRow(proj, idx);
+  if (wasExpanded) {
+    const newExpanded = document.getElementById('screen-expanded-' + screenId);
+    if (newExpanded) newExpanded.style.display = 'block';
+  }
+}
+
+function saveScreen(projId, screenId, showFeedback = true) {
+  const proj = getProject(projId);
+  if (!proj) return;
+  const screenIdx = proj.screens.findIndex(s => s.id === screenId);
+  if (screenIdx < 0) return;
+
+  const row = document.getElementById('screen-row-' + screenId);
+  if (!row) return;
+
+  const screen = proj.screens[screenIdx];
+  const fields = row.querySelectorAll('[data-field]');
+
+  fields.forEach(el => {
+    const field = el.dataset.field;
+    const val = el.value;
+    if (field === 'screen_type') screen.screen_type = val;
+    else if (field === 'title_en') screen.title_en = val;
+    else if (field === 'title_fr') screen.title_fr = val;
+    else if (field === 'narration_en') screen.narration_en = val;
+    else if (field === 'narration_fr') screen.narration_fr = val;
+    else if (field === 'visual_direction') screen.visual_direction = val;
+    else if (field === 'interaction_type') screen.interaction_type = val;
+    else if (field === 'synthesia_note') screen.synthesia_note = val;
+    else if (field === 'vyond_note') screen.vyond_note = val;
+    else if (field === 'articulate_note') screen.articulate_note = val;
+    else if (field === 'quiz_question_en') {
+      if (!screen.quiz) screen.quiz = { question_en:'', question_fr:'', options:['','','',''], answer:0 };
+      screen.quiz.question_en = val;
+    } else if (field === 'quiz_question_fr') {
+      if (!screen.quiz) screen.quiz = { question_en:'', question_fr:'', options:['','','',''], answer:0 };
+      screen.quiz.question_fr = val;
+    } else if (field.startsWith('quiz_option_')) {
+      const i = parseInt(field.replace('quiz_option_',''));
+      if (!screen.quiz) screen.quiz = { question_en:'', question_fr:'', options:['','','',''], answer:0 };
+      if (!screen.quiz.options) screen.quiz.options = ['','','',''];
+      screen.quiz.options[i] = val;
+    } else if (field === 'quiz_answer') {
+      if (!screen.quiz) screen.quiz = { question_en:'', question_fr:'', options:['','','',''], answer:0 };
+      screen.quiz.answer = parseInt(val);
+    }
+  });
+
+  // Handle knowledge_check quiz null/init
+  if (screen.screen_type === 'knowledge_check' && !screen.quiz) {
+    screen.quiz = { question_en:'', question_fr:'', options:['','','',''], answer:0 };
+  } else if (screen.screen_type !== 'knowledge_check') {
+    screen.quiz = null;
+  }
+
+  proj.screens[screenIdx] = screen;
+  saveProject(proj);
+
+  // Update collapsed preview
+  const collapsed = row.querySelector('.screen-row-collapsed');
+  if (collapsed) {
+    const numEl = collapsed.querySelector('.screen-num');
+    if (numEl) numEl.textContent = screen.screen_number;
+    const typeEl = collapsed.querySelector('.screen-type-tag');
+    if (typeEl) typeEl.textContent = (screen.screen_type||'').replace('_',' ');
+    const previews = collapsed.querySelectorAll('.screen-text-preview');
+    if (previews[0]) previews[0].textContent = (screen.narration_en||'').slice(0,80) + ((screen.narration_en||'').length>80?'…':'');
+    if (previews[1]) previews[1].textContent = (screen.narration_fr||'').slice(0,80) + ((screen.narration_fr||'').length>80?'…':'');
+  }
+
+  if (showFeedback) {
+    const msg = document.getElementById('saved-msg-' + screenId);
+    if (msg) {
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 1500);
+    }
+  }
+}
+
+function deleteScreen(projId, screenId) {
+  if (!confirm('Delete this screen?')) return;
+  const proj = getProject(projId);
+  if (!proj) return;
+  proj.screens = proj.screens.filter(s => s.id !== screenId);
+  // Renumber
+  proj.screens.forEach((s, i) => s.screen_number = i + 1);
+  saveProject(proj);
+  renderProject(document.getElementById('view'), projId);
+}
+
+function addScreen(projId) {
+  const proj = getProject(projId);
+  if (!proj) return;
+  const newScreen = {
+    id: crypto.randomUUID(),
+    screen_number: proj.screens.length + 1,
+    screen_type: 'content',
+    title_en: '', title_fr: '',
+    narration_en: '', narration_fr: '',
+    visual_direction: '',
+    interaction_type: 'static',
+    synthesia_note: '', vyond_note: '', articulate_note: '',
+    quiz: null
+  };
+  proj.screens.push(newScreen);
+  saveProject(proj);
+  renderProject(document.getElementById('view'), projId);
+  // Scroll to and open new screen
+  setTimeout(() => {
+    const row = document.getElementById('screen-row-' + newScreen.id);
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const expanded = document.getElementById('screen-expanded-' + newScreen.id);
+      if (expanded) expanded.style.display = 'block';
+    }
+  }, 100);
+}
+
+function updateProjectStatus(projId, status) {
+  const proj = getProject(projId);
+  if (!proj) return;
+  proj.status = status;
+  saveProject(proj);
+}
+
+function toggleCollapsible(bodyId) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  body.classList.toggle('open');
+}
+
+function toggleExportMenu() {
+  const menu = document.getElementById('exportMenu');
+  if (menu) menu.classList.toggle('open');
+}
+function closeExportOnOutside(e) {
+  const menu = document.getElementById('exportMenu');
+  const btn = document.getElementById('exportBtn');
+  if (menu && !menu.contains(e.target) && btn && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+}
+
+async function regenProject(projId) {
+  const proj = getProject(projId);
+  if (!proj) return;
+  const fileInput = document.getElementById('regenFileInput');
+  const file = fileInput?.files[0];
+  const statusBar = document.getElementById('regenStatusBar');
+  const apiKey = getApiKey();
+
+  if (!apiKey) {
+    showStatus(statusBar, 'error', 'Please set your Anthropic API key first.');
+    return;
+  }
+
+  let text = proj.extracted_text;
+
+  if (file) {
+    showStatus(statusBar, '', 'Parsing document...');
+    showOverlay('Parsing document...');
+    try {
+      text = await parseFile(file);
+      proj.source_filename = file.name;
+      proj.extracted_text = text;
+    } catch (err) {
+      hideOverlay();
+      showStatus(statusBar, 'error', 'Parse error: ' + err.message);
+      return;
+    }
+  }
+
+  if (!text) {
+    showStatus(statusBar, 'error', 'No source text available. Please upload a document.');
+    return;
+  }
+
+  showOverlay('Generating storyboard with Claude...');
+  showStatus(statusBar, '', 'Generating with Claude...');
+
+  try {
+    const screens = await generateWithClaude(text, proj.language, apiKey);
+    proj.screens = screens;
+    saveProject(proj);
+    hideOverlay();
+    showStatus(statusBar, 'success', 'Done! Storyboard updated.');
+    setTimeout(() => renderProject(document.getElementById('view'), projId), 800);
+  } catch (err) {
+    hideOverlay();
+    showStatus(statusBar, 'error', 'Generation error: ' + err.message);
+  }
+}
+
+// ─── File Parsing ─────────────────────────────────────────────────────────────
+async function parseFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'txt') {
+    return await file.text();
+  } else if (ext === 'pdf') {
+    if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(item => item.str).join(' ') + '\n\n';
+    }
+    return text;
+  } else if (ext === 'docx' || ext === 'doc') {
+    if (typeof mammoth === 'undefined') throw new Error('Mammoth not loaded');
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  } else if (ext === 'pptx' || ext === 'ppt') {
+    return `[PPTX file: ${file.name}. Text extraction for PPTX is limited in browser. Please copy the content into a .txt or .docx file for best results.]`;
+  }
+  return '';
+}
+
+// ─── Claude API ───────────────────────────────────────────────────────────────
+async function generateWithClaude(extractedText, language, apiKey) {
+  const langInstruction = language === 'en'
+    ? 'Generate all narration and titles in English only. Leave FR fields empty strings.'
+    : language === 'fr'
+    ? 'Generate all narration and titles in French only. Leave EN fields empty strings.'
+    : 'Generate full bilingual content — all EN fields in English, all FR fields in French.';
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 8192,
+      system: `You are an expert instructional designer. Given source content, produce a structured e-learning storyboard as a JSON array. Return ONLY valid JSON — no markdown fences, no explanation.`,
+      messages: [{
+        role: 'user',
+        content: `Analyze this source content and create a bilingual e-learning storyboard.\n\n${langInstruction}\n\nSOURCE:\n${extractedText.slice(0, 50000)}\n\nReturn a JSON array of screens. Each screen must have:\n- screen_number (int)\n- screen_type: "title"|"objective"|"content"|"knowledge_check"|"summary"\n- title_en, title_fr (strings)\n- narration_en, narration_fr (2-5 sentences each)\n- visual_direction (describe what shows on screen)\n- interaction_type: "static"|"click-reveal"|"quiz"|"video"\n- synthesia_note (avatar/stage direction for Synthesia, or null)\n- vyond_note (scene/character direction for Vyond, or null)\n- articulate_note (slide type/trigger note for Articulate, or null)\n- quiz: null unless screen_type is "knowledge_check", then: { question_en, question_fr, options: [4 strings in EN], answer: 0-3 }\n\nEach screen must also have an "id" field set to a unique string (e.g. "screen_1", "screen_2", etc.).\n\nStructure: title screen → 1-2 objective screens → content screens (one per major topic) → knowledge checks after key concepts → summary. Aim for 8-15 screens.\n\nReturn ONLY the JSON array.`
+      }]
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${response.status}`);
+  }
+
+  const data = await response.json();
+  let raw = data.content[0].text.trim();
+
+  // Strip markdown fences if present
+  if (raw.startsWith('```')) {
+    const lines = raw.split('\n');
+    const endIdx = lines[lines.length-1].trim() === '```' ? lines.length - 1 : lines.length;
+    raw = lines.slice(1, endIdx).join('\n');
+  }
+
+  const screens = JSON.parse(raw);
+
+  // Ensure each screen has an id
+  return screens.map((s, i) => ({
+    id: s.id || crypto.randomUUID(),
+    screen_number: s.screen_number || (i + 1),
+    screen_type: s.screen_type || 'content',
+    title_en: s.title_en || '',
+    title_fr: s.title_fr || '',
+    narration_en: s.narration_en || '',
+    narration_fr: s.narration_fr || '',
+    visual_direction: s.visual_direction || '',
+    interaction_type: s.interaction_type || 'static',
+    synthesia_note: s.synthesia_note || '',
+    vyond_note: s.vyond_note || '',
+    articulate_note: s.articulate_note || '',
+    quiz: s.quiz || null,
+  }));
+}
+
+// ─── Word Export ──────────────────────────────────────────────────────────────
+function exportStoryboard(projId) {
+  const proj = getProject(projId);
+  if (!proj) return;
+
+  document.getElementById('exportMenu')?.classList.remove('open');
+
+  if (!proj.screens.length) { alert('No screens to export.'); return; }
+
+  const {
+    Document, Packer, Paragraph, Table, TableRow, TableCell,
+    TextRun, HeadingLevel, WidthType
+  } = docx;
+
+  const children = [];
+
+  children.push(new Paragraph({
+    text: `Storyboard: ${proj.name}`,
+    heading: HeadingLevel.TITLE,
+  }));
+
+  children.push(new Paragraph({
+    children: [new TextRun({ text: `Owner: ${proj.owner}  |  Language: ${proj.language}  |  Status: ${proj.status}`, color: '888888' })]
+  }));
+
+  children.push(new Paragraph(''));
+
+  for (const screen of proj.screens) {
+    children.push(new Paragraph({
+      text: `Screen ${screen.screen_number} — ${(screen.screen_type||'').replace('_',' ').toUpperCase()}`,
+      heading: HeadingLevel.HEADING_1,
+    }));
+
+    const fields = [
+      ['Title (EN)', screen.title_en],
+      ['Title (FR)', screen.title_fr],
+      ['Narration (EN)', screen.narration_en],
+      ['Narration (FR)', screen.narration_fr],
+      ['Visual Direction', screen.visual_direction],
+      ['Interaction Type', screen.interaction_type],
+      ['Synthesia Note', screen.synthesia_note],
+      ['Vyond Note', screen.vyond_note],
+      ['Articulate Note', screen.articulate_note],
+    ];
+
+    if (screen.quiz) {
+      fields.push(['Quiz Question (EN)', screen.quiz.question_en]);
+      fields.push(['Quiz Question (FR)', screen.quiz.question_fr]);
+      (screen.quiz.options || []).forEach((opt, i) => {
+        const letters = ['A','B','C','D'];
+        fields.push([`Option ${letters[i]}${i === screen.quiz.answer ? ' ✓' : ''}`, opt]);
+      });
+    }
+
+    const rows = fields.map(([label, value]) =>
+      new TableRow({
+        children: [
+          new TableCell({
+            children: [new Paragraph({ children: [new TextRun({ text: label, bold: true })] })],
+            width: { size: 25, type: WidthType.PERCENTAGE }
+          }),
+          new TableCell({ children: [new Paragraph(String(value || ''))] }),
+        ]
+      })
+    );
+
+    children.push(new Table({ rows }));
+    children.push(new Paragraph(''));
+  }
+
+  const doc = new Document({ sections: [{ children }] });
+
+  Packer.toBlob(doc).then(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${proj.name.replace(/\s+/g,'_')}_storyboard.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    // Update status to exported
+    proj.status = 'exported';
+    saveProject(proj);
+    const statusSel = document.getElementById('statusSelect');
+    if (statusSel) statusSel.value = 'exported';
+  });
+}
+
+// ─── Excel Export ─────────────────────────────────────────────────────────────
+function exportQuiz(projId) {
+  const proj = getProject(projId);
+  if (!proj) return;
+
+  document.getElementById('exportMenu')?.classList.remove('open');
+
+  const quizScreens = proj.screens.filter(s => s.quiz);
+  if (!quizScreens.length) {
+    alert('No quiz screens found in this project. Add screens with type "knowledge_check" first.');
+    return;
+  }
+
+  const rows = [['Screen #','Type','Question (EN)','Question (FR)','Option A','Option B','Option C','Option D','Correct Answer']];
+  for (const s of quizScreens) {
+    const letters = ['A','B','C','D'];
+    const opts = s.quiz.options || ['','','',''];
+    rows.push([
+      s.screen_number, s.screen_type,
+      s.quiz.question_en || '', s.quiz.question_fr || '',
+      opts[0]||'', opts[1]||'', opts[2]||'', opts[3]||'',
+      letters[s.quiz.answer] || 'A'
+    ]);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // Auto-width columns
+  const colWidths = rows[0].map((_, ci) => ({
+    wch: Math.max(...rows.map(row => String(row[ci]||'').length), 10)
+  }));
+  ws['!cols'] = colWidths;
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Quiz Bank');
+  XLSX.writeFile(wb, `${proj.name.replace(/\s+/g,'_')}_quiz_bank.xlsx`);
+}
+
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function showStatus(el, type, msg) {
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'status-bar visible' + (type ? ' ' + type : '');
+}
+
+function showOverlay(msg) {
+  const overlay = document.getElementById('generatingOverlay');
+  const status = document.getElementById('overlayStatus');
+  if (overlay) overlay.classList.add('visible');
+  if (status) status.textContent = msg;
+}
+
+function hideOverlay() {
+  const overlay = document.getElementById('generatingOverlay');
+  if (overlay) overlay.classList.remove('visible');
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+</script>
+</body>
+</html>
