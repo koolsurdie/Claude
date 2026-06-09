@@ -146,6 +146,22 @@
     .file-selected { margin-top: 0.75rem; font-size: 0.85rem; color: #000; font-weight: 600; }
     .file-size { font-weight: 400; color: #555; }
 
+    /* Multi-source rows */
+    .source-row { border: 1px solid #e0e0e0; padding: 1rem; margin-bottom: 0.75rem; background: #fafafa; }
+    .source-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+    .source-num { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #555; }
+    .src-remove-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; color: #999; padding: 0 0.25rem; }
+    .src-remove-btn:hover { color: #FF7900; }
+    .source-type-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+    .src-tab { background: #f0f0f0; border: 1px solid #ddd; padding: 0.3rem 0.75rem; font-size: 0.78rem; cursor: pointer; font-family: inherit; }
+    .src-tab.active { background: #000; color: #fff; border-color: #000; }
+    .src-tab:hover:not(.active) { border-color: #FF7900; }
+    .src-url-input { width: 100%; box-sizing: border-box; padding: 0.5rem 0.75rem; border: 1px solid #ccc; font-family: inherit; font-size: 0.85rem; }
+    .src-url-input:focus { border-color: #FF7900; outline: none; }
+    .src-text-input { width: 100%; box-sizing: border-box; padding: 0.5rem 0.75rem; border: 1px solid #ccc; font-family: inherit; font-size: 0.85rem; min-height: 120px; resize: vertical; }
+    .src-text-input:focus { border-color: #FF7900; outline: none; }
+    .upload-zone { padding: 1.25rem; }
+
     /* Status messages */
     .status-bar {
       padding: 0.75rem 1rem; margin: 1rem 0;
@@ -470,7 +486,47 @@ function renderDashboard(container) {
 }
 
 // ─── New Project ──────────────────────────────────────────────────────────────
+const MAX_SOURCES = 8;
+
+function sourceRowHTML(i) {
+  return `
+  <div class="source-row" id="srcRow${i}">
+    <div class="source-row-header">
+      <span class="source-num">Source ${i + 1}</span>
+      ${i > 0 ? `<button class="src-remove-btn" onclick="removeSourceRow(${i})" title="Remove">&#10005;</button>` : ''}
+    </div>
+    <div class="source-type-tabs">
+      <button class="src-tab active" onclick="switchSrcTab(${i},'file',this)">File</button>
+      <button class="src-tab" onclick="switchSrcTab(${i},'url',this)">URL / YouTube</button>
+      <button class="src-tab" onclick="switchSrcTab(${i},'text',this)">Paste Text</button>
+    </div>
+    <div class="src-panel" id="srcFile${i}">
+      <div class="upload-zone" id="srcZone${i}"
+        ondragover="handleDragOver(event,'srcZone${i}')"
+        ondragleave="handleDragLeave(event,'srcZone${i}')"
+        ondrop="handleSrcDrop(event,${i})">
+        <input type="file" id="srcFileInput${i}" accept=".pdf,.docx,.doc,.pptx,.ppt,.txt"
+          onchange="handleSrcFileSelect(${i})" />
+        <div class="upload-icon">&#128196;</div>
+        <div class="upload-text"><strong>Drag &amp; drop</strong> or click to browse</div>
+        <div class="upload-text" style="margin-top:0.3rem;font-size:0.75rem;">PDF, DOCX, PPTX, TXT</div>
+        <div id="srcFileInfo${i}" class="file-selected" style="display:none;"></div>
+      </div>
+    </div>
+    <div class="src-panel" id="srcUrl${i}" style="display:none;">
+      <input type="url" id="srcUrlInput${i}" class="src-url-input"
+        placeholder="https://youtube.com/watch?v=... or any URL" />
+      <div class="upload-text" style="font-size:0.72rem;margin-top:0.3rem;color:#888;">YouTube, web pages, or direct file links — text will be extracted from the page</div>
+    </div>
+    <div class="src-panel" id="srcText${i}" style="display:none;">
+      <textarea id="srcTextInput${i}" class="src-text-input"
+        placeholder="Paste script, notes, or any text content here..."></textarea>
+    </div>
+  </div>`;
+}
+
 function renderNewProject(container) {
+  _srcCount = 1;
   container.innerHTML = `
   <div class="page-header">
     <h1>New Project</h1>
@@ -490,30 +546,15 @@ function renderNewProject(container) {
     <div class="form-group">
       <label>Language Output</label>
       <div class="radio-group">
-        <label class="radio-label">
-          <input type="radio" name="lang" value="both" checked /> EN + FR (Bilingual)
-        </label>
-        <label class="radio-label">
-          <input type="radio" name="lang" value="en" /> English only
-        </label>
-        <label class="radio-label">
-          <input type="radio" name="lang" value="fr" /> French only
-        </label>
+        <label class="radio-label"><input type="radio" name="lang" value="both" checked /> EN + FR (Bilingual)</label>
+        <label class="radio-label"><input type="radio" name="lang" value="en" /> English only</label>
+        <label class="radio-label"><input type="radio" name="lang" value="fr" /> French only</label>
       </div>
     </div>
     <div class="form-group">
-      <label>Source Document (optional)</label>
-      <div class="upload-zone" id="newUploadZone"
-        ondragover="handleDragOver(event,'newUploadZone')"
-        ondragleave="handleDragLeave(event,'newUploadZone')"
-        ondrop="handleDrop(event,'newUploadZone','newFileInput')">
-        <input type="file" id="newFileInput" accept=".pdf,.docx,.doc,.pptx,.ppt,.txt"
-          onchange="handleFileSelect('newFileInput','newUploadZone','newFileInfo')" />
-        <div class="upload-icon">&#128196;</div>
-        <div class="upload-text"><strong>Drag &amp; drop</strong> or click to browse</div>
-        <div class="upload-text" style="margin-top:0.3rem;">PDF, DOCX, DOC, PPTX, TXT</div>
-        <div id="newFileInfo" class="file-selected" style="display:none;"></div>
-      </div>
+      <label>Sources <span style="font-weight:400;color:#888;">(up to ${MAX_SOURCES} — mix files, URLs, and pasted text)</span></label>
+      <div id="sourcesList">${sourceRowHTML(0)}</div>
+      <button class="btn-outline" id="addSrcBtn" onclick="addSourceRow()" style="margin-top:0.75rem;font-size:0.82rem;">+ Add Another Source</button>
     </div>
     <div id="newStatusBar" class="status-bar"></div>
     <div class="form-actions">
@@ -523,38 +564,82 @@ function renderNewProject(container) {
   </div>`;
 }
 
+let _srcCount = 1;
+
+function addSourceRow() {
+  if (_srcCount >= MAX_SOURCES) return;
+  document.getElementById('sourcesList').insertAdjacentHTML('beforeend', sourceRowHTML(_srcCount));
+  _srcCount++;
+  if (_srcCount >= MAX_SOURCES) document.getElementById('addSrcBtn').disabled = true;
+}
+
+function removeSourceRow(i) {
+  const row = document.getElementById('srcRow' + i);
+  if (row) row.remove();
+  if (_srcCount < MAX_SOURCES) document.getElementById('addSrcBtn').disabled = false;
+}
+
+function switchSrcTab(i, type, btn) {
+  ['file','url','text'].forEach(t => {
+    document.getElementById('srcFile' + i).style.display = t === 'file' ? '' : 'none';
+    document.getElementById('srcUrl' + i).style.display = t === 'url' ? '' : 'none';
+    document.getElementById('srcText' + i).style.display = t === 'text' ? '' : 'none';
+  });
+  document.getElementById('srcFile' + i).style.display = type === 'file' ? '' : 'none';
+  document.getElementById('srcUrl' + i).style.display = type === 'url' ? '' : 'none';
+  document.getElementById('srcText' + i).style.display = type === 'text' ? '' : 'none';
+  btn.closest('.source-type-tabs').querySelectorAll('.src-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function handleSrcDrop(e, i) {
+  e.preventDefault();
+  document.getElementById('srcZone' + i).classList.remove('drag-over');
+  const files = e.dataTransfer.files;
+  if (files.length) {
+    const input = document.getElementById('srcFileInput' + i);
+    const dt = new DataTransfer(); dt.items.add(files[0]); input.files = dt.files;
+    handleSrcFileSelect(i);
+  }
+}
+
+function handleSrcFileSelect(i) {
+  const input = document.getElementById('srcFileInput' + i);
+  const info = document.getElementById('srcFileInfo' + i);
+  if (input.files && input.files[0]) {
+    const f = input.files[0];
+    const size = f.size > 1024*1024 ? (f.size/(1024*1024)).toFixed(1)+' MB' : (f.size/1024).toFixed(0)+' KB';
+    info.style.display = 'block';
+    info.innerHTML = `&#128196; ${esc(f.name)} <span class="file-size">(${size})</span>`;
+  }
+}
+
+async function fetchUrlText(url) {
+  // For YouTube, extract video ID and note it; for other URLs use a CORS proxy to fetch text
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (ytMatch) {
+    return `[YouTube Video: ${url}\nVideo ID: ${ytMatch[1]}\nNote: Transcript not available in browser. Please provide a summary or script of this video as a separate text source, or paste the transcript into a "Paste Text" source.]`;
+  }
+  // Generic URL — try CORS proxy
+  try {
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const resp = await fetch(proxy);
+    if (!resp.ok) throw new Error('Fetch failed');
+    const data = await resp.json();
+    // Strip HTML tags roughly
+    const text = (data.contents || '').replace(/<[^>]+>/g, ' ').replace(/\s{3,}/g, '\n').trim();
+    return text.slice(0, 20000) || `[Could not extract text from ${url}]`;
+  } catch {
+    return `[URL: ${url} — could not fetch content automatically. Please download and upload as a file, or paste the text directly.]`;
+  }
+}
+
 function handleDragOver(e, zoneId) {
   e.preventDefault();
   document.getElementById(zoneId).classList.add('drag-over');
 }
 function handleDragLeave(e, zoneId) {
   document.getElementById(zoneId).classList.remove('drag-over');
-}
-function handleDrop(e, zoneId, inputId) {
-  e.preventDefault();
-  document.getElementById(zoneId).classList.remove('drag-over');
-  const files = e.dataTransfer.files;
-  if (files.length) {
-    const input = document.getElementById(inputId);
-    // Assign files to the input
-    const dt = new DataTransfer();
-    dt.items.add(files[0]);
-    input.files = dt.files;
-    const infoId = inputId.replace('FileInput','FileInfo');
-    handleFileSelect(inputId, zoneId, infoId);
-  }
-}
-function handleFileSelect(inputId, zoneId, infoId) {
-  const input = document.getElementById(inputId);
-  const info = document.getElementById(infoId);
-  if (input.files && input.files[0]) {
-    const f = input.files[0];
-    const size = f.size > 1024*1024
-      ? (f.size/(1024*1024)).toFixed(1) + ' MB'
-      : (f.size/1024).toFixed(0) + ' KB';
-    info.style.display = 'block';
-    info.innerHTML = `&#128196; ${esc(f.name)} <span class="file-size">(${size})</span>`;
-  }
 }
 function checkNewFormReady() {
   const name = (document.getElementById('projName')?.value || '').trim();
@@ -567,59 +652,84 @@ async function submitNewProject() {
   const name = document.getElementById('projName').value.trim();
   const owner = document.getElementById('projOwner').value.trim();
   const lang = document.querySelector('input[name="lang"]:checked')?.value || 'both';
-  const fileInput = document.getElementById('newFileInput');
-  const file = fileInput.files[0] || null;
   const statusBar = document.getElementById('newStatusBar');
 
   if (!name || !owner) return;
 
   const apiKey = getApiKey();
-
-  // Create project
-  const proj = {
-    id: crypto.randomUUID(),
-    name, owner, language: lang,
-    status: 'draft',
-    source_filename: file ? file.name : null,
-    extracted_text: null,
-    screens: [],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
-  if (!file) {
-    saveProject(proj);
-    navigate('#project/' + proj.id);
-    return;
-  }
-
   if (!apiKey) {
     showStatus(statusBar, 'error', 'Please set your Gemini API key first (click ⚙ API Key in the sidebar).');
     return;
   }
 
-  // Disable button
   document.getElementById('createBtn').disabled = true;
-  showStatus(statusBar, '', 'Parsing document...');
-  showOverlay('Parsing document...');
+  showStatus(statusBar, '', 'Collecting sources...');
+  showOverlay('Collecting sources...');
+
+  // Gather all source rows present in DOM
+  const parts = [];
+  const sourceNames = [];
+  for (let i = 0; i < MAX_SOURCES; i++) {
+    const row = document.getElementById('srcRow' + i);
+    if (!row) continue;
+    const activeTab = row.querySelector('.src-tab.active')?.textContent?.trim() || 'File';
+    try {
+      if (activeTab === 'File') {
+        const input = document.getElementById('srcFileInput' + i);
+        if (input && input.files[0]) {
+          showOverlay(`Parsing: ${input.files[0].name}…`);
+          const txt = await parseFile(input.files[0]);
+          if (txt) { parts.push(`--- Source: ${input.files[0].name} ---\n${txt}`); sourceNames.push(input.files[0].name); }
+        }
+      } else if (activeTab === 'URL / YouTube') {
+        const url = (document.getElementById('srcUrlInput' + i)?.value || '').trim();
+        if (url) {
+          showOverlay(`Fetching: ${url}…`);
+          const txt = await fetchUrlText(url);
+          parts.push(`--- Source: ${url} ---\n${txt}`); sourceNames.push(url);
+        }
+      } else {
+        const txt = (document.getElementById('srcTextInput' + i)?.value || '').trim();
+        if (txt) { parts.push(`--- Pasted text (source ${i+1}) ---\n${txt}`); sourceNames.push(`Pasted text ${i+1}`); }
+      }
+    } catch (err) {
+      parts.push(`--- Source ${i+1} error: ${err.message} ---`);
+    }
+  }
+
+  const combinedText = parts.join('\n\n');
+  const proj = {
+    id: crypto.randomUUID(),
+    name, owner, language: lang,
+    status: 'draft',
+    source_filenames: sourceNames,
+    source_filename: sourceNames[0] || null,
+    extracted_text: combinedText || null,
+    screens: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  if (!combinedText) {
+    saveProject(proj);
+    hideOverlay();
+    navigate('#project/' + proj.id);
+    return;
+  }
+
+  showOverlay('Generating storyboard with Gemini…');
+  showStatus(statusBar, '', 'Generating storyboard…');
 
   try {
-    const text = await parseFile(file);
-    proj.extracted_text = text;
-
-    showOverlay('Generating storyboard with Claude...');
-    showStatus(statusBar, '', 'Generating storyboard with Claude...');
-
-    const screens = await generateWithClaude(text, lang, apiKey);
+    const screens = await generateWithClaude(combinedText, lang, apiKey);
     proj.screens = screens;
-
     saveProject(proj);
     hideOverlay();
     showStatus(statusBar, 'success', 'Done! Navigating to your project...');
     setTimeout(() => navigate('#project/' + proj.id), 600);
   } catch (err) {
     hideOverlay();
-    saveProject(proj); // save even if generation failed
+    saveProject(proj);
     showStatus(statusBar, 'error', 'Error: ' + err.message + ' — Project saved without screens.');
     document.getElementById('createBtn').disabled = false;
     setTimeout(() => navigate('#project/' + proj.id), 2000);
