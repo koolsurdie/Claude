@@ -1,84 +1,39 @@
-# IntelliBoard
+# IntelliBoard — AI Storyboard Builder for ID Teams
 
-An internal AI-powered instructional design storyboard tool. Ingest source documents, generate bilingual (EN/FR) e-learning storyboards with Claude AI, and export to Word/Excel.
+IntelliBoard ingests training documents and automatically generates bilingual (EN/FR) instructional design storyboards using Claude AI. Teams can review, edit, and export storyboards to Word, Excel, Synthesia, Vyond, and Articulate formats.
 
-## Stack
+## Prerequisites
 
-- **Frontend**: React 18 + Vite + Tailwind CSS
-- **Backend**: Python FastAPI
-- **Database**: PostgreSQL 15
-- **AI**: Anthropic Claude (claude-sonnet-4-6)
-- **Orchestration**: Docker Compose
+- Docker Desktop (includes Docker Compose)
 
-## Quick Start
+## Setup
 
-### 1. Clone and configure
+1. Clone this repository
+2. Copy the example environment file: `cp .env.example .env`
+3. Open `.env` and add your Anthropic API key
+4. Start all services: `docker compose up --build`
+5. Open your browser at http://localhost:3000
 
-```bash
-git clone <repo>
-cd intelliboard
-cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
-```
+## Supported Input Formats
 
-### 2. Start with Docker Compose
+- PDF documents
+- Word documents (.docx, .doc)
+- PowerPoint presentations (.pptx, .ppt)
+- Plain text files (.txt)
 
-```bash
-docker compose up --build
-```
+## Export Formats
 
-### 3. Open the app
+| Format | Description |
+|---|---|
+| Word Storyboard (.docx) | Full bilingual storyboard with narration, visual direction, and tool notes |
+| Quiz Bank (.xlsx) | All knowledge check questions and answer options |
+| Synthesia Script (.docx) | Avatar script formatted for Synthesia video production |
+| Vyond Brief (.docx) | Animation brief formatted for Vyond |
+| Articulate Outline (.docx) | Course outline for Articulate Storyline/Rise |
 
-- Frontend: http://localhost:3000
-- Backend API docs: http://localhost:8000/docs
+## Brand Notes
 
-## Usage
-
-1. Click **New Project** — enter project name, owner, language preference
-2. Upload a source document (PDF, DOCX, PPTX, TXT)
-3. AI automatically generates a bilingual storyboard (8–15 screens)
-4. Inline-edit any screen in the **Project View**
-5. Update status: Draft → In Review → Approved → Exported
-6. Export the storyboard as **.docx** or quiz bank as **.xlsx**
-
-## Development (without Docker)
-
-### Backend
-
-```bash
-cd backend
-pip install -r requirements.txt
-DATABASE_URL=postgresql://id_user:id_pass@localhost:5432/intelliboard \
-  ANTHROPIC_API_KEY=your_key \
-  uvicorn main:app --reload
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/projects` | Create project |
-| GET | `/api/projects` | List all projects |
-| GET | `/api/projects/{id}` | Get project + screens |
-| PUT | `/api/projects/{id}` | Update project |
-| DELETE | `/api/projects/{id}` | Delete project |
-| POST | `/api/projects/{id}/ingest` | Upload + parse file |
-| POST | `/api/projects/{id}/generate` | Generate storyboard with AI |
-| PUT | `/api/projects/{id}/screens/{sid}` | Edit a screen |
-| GET | `/api/projects/{id}/export/storyboard` | Download Word storyboard |
-| GET | `/api/projects/{id}/export/quiz` | Download Excel quiz bank |
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
-| `DATABASE_URL` | PostgreSQL connection string |
+- Font: Helvetica Neue / Helvetica / Arial
+- Accent colour: #FF7900 (buttons, active states, links)
+- Backgrounds: white (#FFFFFF) or black (#000000)
+- No border-radius — sharp corners throughout
