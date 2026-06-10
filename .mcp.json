@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "meigen": {
+      "command": "npx",
+      "args": ["-y", "meigen@latest"],
+      "env": {
+        "MEIGEN_API_TOKEN": "meigen_sk_YOUR_TOKEN_HERE"
+      }
+    }
+  }
+}
