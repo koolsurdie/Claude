@@ -3,265 +3,447 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HREE Upskilling & Reskilling Program</title>
+  <title>HREE Upskilling — Reach New Heights</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap');
+
     :root {
-      --orange: #f26522;
-      --orange-dark: #c94e0f;
-      --orange-light: #fde8d8;
-      --blue: #1a3a5c;
-      --blue-light: #e8f0f8;
-      --green: #2e7d32;
-      --green-light: #e8f5e9;
-      --purple: #6a1b9a;
-      --purple-light: #f3e5f5;
-      --teal: #00695c;
-      --teal-light: #e0f2f1;
-      --gray: #f5f5f5;
-      --dark: #1e1e1e;
-      --text: #333;
-      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+      --void: #020408;
+      --deep: #050d1a;
+      --panel: rgba(8,20,45,0.75);
+      --panel-border: rgba(80,160,255,0.15);
+      --glow-blue: #3b8eff;
+      --glow-orange: #ff6b1a;
+      --glow-green: #00e676;
+      --glow-purple: #c97dff;
+      --glow-teal: #00e5d0;
+      --text: #e8f0ff;
+      --muted: rgba(180,200,255,0.55);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #fafafa;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--void);
       color: var(--text);
-      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
     }
 
-    /* ── Hero ── */
+    /* ─── STAR CANVAS ─── */
+    #stars-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ─── FLOATING DEBRIS ─── */
+    .debris {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      animation: floatDebris linear infinite;
+    }
+    @keyframes floatDebris {
+      0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      5%   { opacity: 1; }
+      95%  { opacity: 1; }
+      100% { transform: translateY(-20vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ─── LAYOUT WRAPPER ─── */
+    .page { position: relative; z-index: 2; }
+
+    /* ─── HERO ─── */
     .hero {
-      background: linear-gradient(135deg, var(--blue) 0%, #0f2744 60%, #1a4a7a 100%);
-      color: #fff;
-      padding: 64px 24px 72px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
+      padding: 60px 24px 80px;
       position: relative;
       overflow: hidden;
     }
-    .hero::before {
+
+    /* big ambient orbs */
+    .hero::before, .hero::after {
       content: '';
       position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at 70% 50%, rgba(242,101,34,0.18) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
     }
-    .hero-badge {
-      display: inline-block;
-      background: var(--orange);
-      color: #fff;
-      font-size: 0.75rem;
+    .hero::before {
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(59,142,255,0.18), transparent 70%);
+      top: -200px; left: -200px;
+      animation: orbDrift1 18s ease-in-out infinite alternate;
+    }
+    .hero::after {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(255,107,26,0.14), transparent 70%);
+      bottom: -100px; right: -150px;
+      animation: orbDrift2 22s ease-in-out infinite alternate;
+    }
+    @keyframes orbDrift1 { from { transform: translate(0,0); } to { transform: translate(80px,60px); } }
+    @keyframes orbDrift2 { from { transform: translate(0,0); } to { transform: translate(-60px,-80px); } }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(59,142,255,0.12);
+      border: 1px solid rgba(59,142,255,0.35);
+      color: var(--glow-blue);
+      font-size: 0.72rem;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      padding: 4px 14px;
+      padding: 6px 16px;
       border-radius: 20px;
-      margin-bottom: 16px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.8s ease both;
     }
+    .hero-eyebrow::before { content: '✦'; font-size: 0.6rem; }
+
     .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 800;
-      margin-bottom: 12px;
-      position: relative;
+      font-size: clamp(2.4rem, 7vw, 5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+      animation: fadeUp 0.9s ease 0.1s both;
     }
-    .hero h1 span { color: var(--orange); }
-    .hero p {
-      font-size: 1.1rem;
-      opacity: 0.85;
-      max-width: 620px;
-      margin: 0 auto 28px;
-      position: relative;
+    .hero h1 .line1 { display: block; color: var(--text); }
+    .hero h1 .line2 {
+      display: block;
+      background: linear-gradient(90deg, var(--glow-orange), #ffaa44, var(--glow-orange));
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeUp 0.9s ease 0.1s both, shimmer 4s linear infinite;
     }
-    .hero-meta {
+    @keyframes shimmer { to { background-position: 200% center; } }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+      animation: fadeUp 1s ease 0.2s both;
+    }
+
+    .hero-stats {
       display: flex;
       justify-content: center;
-      gap: 32px;
+      gap: 40px;
       flex-wrap: wrap;
+      animation: fadeUp 1s ease 0.35s both;
+    }
+    .stat {
+      text-align: center;
       position: relative;
     }
-    .hero-meta-item {
-      text-align: center;
+    .stat::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%; transform: translateX(-50%);
+      width: 20px; height: 2px;
+      border-radius: 2px;
+      background: var(--glow-blue);
     }
-    .hero-meta-item strong {
+    .stat strong {
       display: block;
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--orange);
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fff;
     }
-    .hero-meta-item span {
-      font-size: 0.8rem;
-      opacity: 0.75;
+    .stat span {
+      font-size: 0.72rem;
+      color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
     }
 
-    /* ── Overview strip ── */
-    .overview {
-      background: #fff;
-      padding: 32px 24px;
-      border-bottom: 1px solid #eee;
+    /* scroll hint */
+    .scroll-hint {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      animation: fadeUp 1s ease 0.7s both;
     }
-    .overview-inner {
-      max-width: 1100px;
-      margin: 0 auto;
+    .scroll-hint .arrow {
+      width: 20px; height: 20px;
+      border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted);
+      transform: rotate(45deg);
+      animation: bounce 1.5s ease-in-out infinite;
+    }
+    @keyframes bounce { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(6px)} }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── OVERVIEW BAND ─── */
+    .overview-band {
+      background: linear-gradient(90deg, rgba(59,142,255,0.06), rgba(255,107,26,0.06));
+      border-top: 1px solid rgba(59,142,255,0.12);
+      border-bottom: 1px solid rgba(59,142,255,0.12);
+      padding: 28px 24px;
       text-align: center;
     }
-    .overview-inner p {
-      font-size: 1rem;
-      color: #555;
+    .overview-band p {
       max-width: 780px;
       margin: 0 auto;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.75;
     }
-    .overview-inner strong { color: var(--blue); }
+    .overview-band strong { color: #fff; }
 
-    /* ── Section title ── */
-    .section-title {
+    /* ─── SECTION HEADER ─── */
+    .section-head {
       text-align: center;
-      padding: 52px 24px 8px;
+      padding: 80px 24px 16px;
     }
-    .section-title h2 {
-      font-size: clamp(1.5rem, 3vw, 2rem);
-      font-weight: 800;
-      color: var(--blue);
-      margin-bottom: 8px;
+    .section-head h2 {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
     }
-    .section-title p { color: #666; font-size: 0.95rem; }
+    .section-head p { color: var(--muted); font-size: 0.95rem; }
+    .glow-word { color: var(--glow-blue); }
 
-    /* ── Path cards ── */
+    /* ─── PATHS GRID ─── */
     .paths-grid {
-      max-width: 1200px;
-      margin: 32px auto 64px;
-      padding: 0 20px;
+      max-width: 1280px;
+      margin: 36px auto 80px;
+      padding: 0 24px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 28px;
     }
 
+    /* ─── PATH CARD ─── */
     .path-card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: var(--shadow);
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .path-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 36px rgba(0,0,0,0.13);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: box-shadow 0.35s, border-color 0.35s;
+      transform-style: preserve-3d;
+      will-change: transform;
+      cursor: default;
     }
 
+    /* per-card accent colors */
+    .path-card[data-path="1"] { --accent: var(--glow-orange); --accent2: #ff9a4d; }
+    .path-card[data-path="2"] { --accent: var(--glow-blue);   --accent2: #80bfff; }
+    .path-card[data-path="3"] { --accent: var(--glow-green);  --accent2: #69f0ae; }
+    .path-card[data-path="4"] { --accent: var(--glow-purple); --accent2: #e0b0ff; }
+
+    .path-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 40px rgba(var(--shadow-rgb, 59,142,255),0.25), 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .path-card[data-path="1"]:hover { box-shadow: 0 0 40px rgba(255,107,26,0.28), 0 20px 60px rgba(0,0,0,0.5); }
+    .path-card[data-path="2"]:hover { box-shadow: 0 0 40px rgba(59,142,255,0.28), 0 20px 60px rgba(0,0,0,0.5); }
+    .path-card[data-path="3"]:hover { box-shadow: 0 0 40px rgba(0,230,118,0.28), 0 20px 60px rgba(0,0,0,0.5); }
+    .path-card[data-path="4"]:hover { box-shadow: 0 0 40px rgba(201,125,255,0.28), 0 20px 60px rgba(0,0,0,0.5); }
+
+    /* card header */
     .path-header {
-      padding: 28px 24px 20px;
-      color: #fff;
+      padding: 28px 26px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .path-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent), transparent 70%);
+      opacity: 0.15;
+    }
+    .path-header::after {
+      content: '';
+      position: absolute;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: var(--accent);
+      filter: blur(60px);
+      opacity: 0.18;
+      top: -50px; right: -40px;
+    }
+
+    .path-num {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
       position: relative;
     }
-    .path-card:nth-child(1) .path-header { background: linear-gradient(135deg, #e65100, var(--orange)); }
-    .path-card:nth-child(2) .path-header { background: linear-gradient(135deg, #0d47a1, #1976d2); }
-    .path-card:nth-child(3) .path-header { background: linear-gradient(135deg, #1b5e20, #388e3c); }
-    .path-card:nth-child(4) .path-header { background: linear-gradient(135deg, #4a148c, #7b1fa2); }
-
-    .path-number {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      opacity: 0.8;
-      margin-bottom: 4px;
-    }
-    .path-mountain {
-      font-size: 1.6rem;
-      margin-bottom: 2px;
-      opacity: 0.9;
-    }
-    .path-header h3 {
-      font-size: 1.25rem;
-      font-weight: 800;
+    .path-icon {
+      font-size: 2rem;
       margin-bottom: 6px;
+      display: block;
+      filter: drop-shadow(0 0 12px var(--accent));
+      animation: levitate 4s ease-in-out infinite;
+      position: relative;
+    }
+    @keyframes levitate {
+      0%,100% { transform: translateY(0px) rotate(-2deg); }
+      50%      { transform: translateY(-10px) rotate(2deg); }
+    }
+    /* stagger levitate per card */
+    .path-card[data-path="1"] .path-icon { animation-delay: 0s; }
+    .path-card[data-path="2"] .path-icon { animation-delay: 1s; }
+    .path-card[data-path="3"] .path-icon { animation-delay: 2s; }
+    .path-card[data-path="4"] .path-icon { animation-delay: 3s; }
+
+    .path-header h3 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      position: relative;
     }
     .path-duration {
-      font-size: 0.78rem;
-      background: rgba(255,255,255,0.2);
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 12px;
+      font-size: 0.73rem;
       font-weight: 600;
-    }
-
-    .path-body { padding: 20px 24px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
-
-    .path-desc { font-size: 0.9rem; color: #555; }
-
-    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag {
-      font-size: 0.72rem;
-      font-weight: 600;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
       padding: 3px 10px;
       border-radius: 12px;
-      background: #f0f0f0;
-      color: #444;
+      position: relative;
     }
-    .path-card:nth-child(1) .tag { background: #fde8d8; color: #c94e0f; }
-    .path-card:nth-child(2) .tag { background: #e3f0ff; color: #0d47a1; }
-    .path-card:nth-child(3) .tag { background: #e8f5e9; color: #1b5e20; }
-    .path-card:nth-child(4) .tag { background: #f3e5f5; color: #4a148c; }
 
+    /* card body */
+    .path-body {
+      padding: 20px 26px 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .path-desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* tags */
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--accent);
+    }
+
+    /* module list */
     .module-list { list-style: none; }
     .module-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.85rem;
+      color: rgba(220,235,255,0.8);
       display: flex;
+      gap: 10px;
       align-items: flex-start;
-      gap: 8px;
-      padding: 7px 0;
-      border-bottom: 1px solid #f0f0f0;
-      font-size: 0.87rem;
-      color: #444;
+      line-height: 1.5;
     }
     .module-list li:last-child { border-bottom: none; }
     .module-list li::before {
-      content: '▸';
-      font-size: 0.7rem;
-      margin-top: 3px;
+      content: '◆';
+      font-size: 0.45rem;
+      color: var(--accent);
+      margin-top: 6px;
       flex-shrink: 0;
+      filter: drop-shadow(0 0 4px var(--accent));
     }
-    .path-card:nth-child(1) .module-list li::before { color: var(--orange); }
-    .path-card:nth-child(2) .module-list li::before { color: #1976d2; }
-    .path-card:nth-child(3) .module-list li::before { color: #388e3c; }
-    .path-card:nth-child(4) .module-list li::before { color: #7b1fa2; }
+    .module-list li strong { color: #fff; }
 
-    .cost-badge {
+    /* cost badge */
+    .cost-chip {
       margin-top: auto;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--accent);
+      background: rgba(255,255,255,0.03);
+      font-size: 0.82rem;
     }
-    .path-card:nth-child(1) .cost-badge { background: #fde8d8; color: #c94e0f; }
-    .path-card:nth-child(2) .cost-badge { background: #e3f0ff; color: #0d47a1; }
-    .path-card:nth-child(3) .cost-badge { background: #e8f5e9; color: #1b5e20; }
-    .path-card:nth-child(4) .cost-badge { background: #f3e5f5; color: #4a148c; }
+    .cost-chip .lbl { color: var(--muted); font-size: 0.75rem; }
+    .cost-chip .val { font-weight: 800; color: var(--accent); letter-spacing: 0.02em; }
 
-    .cost-badge .label { font-weight: 400; font-size: 0.78rem; opacity: 0.8; }
-
-    /* ── Detailed sections ── */
-    .details-section {
-      background: #fff;
-      border-top: 1px solid #eee;
-      padding: 52px 20px 64px;
+    /* glow line at card bottom */
+    .path-card::after {
+      content: '';
+      display: block;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.35s;
     }
-    .details-inner {
-      max-width: 1100px;
+    .path-card:hover::after { opacity: 1; }
+
+    /* ─── CERT DETAILS SECTION ─── */
+    .cert-section {
+      padding: 20px 24px 80px;
+      max-width: 1200px;
       margin: 0 auto;
     }
-    .details-inner h2 {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--blue);
-      margin-bottom: 32px;
+    .cert-section-head {
       text-align: center;
+      margin-bottom: 36px;
+    }
+    .cert-section-head h2 {
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .cert-section-head p { color: var(--muted); font-size: 0.9rem; }
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(59,142,255,0.3), transparent);
+      margin: 0 24px 64px;
     }
 
     .cert-grid {
@@ -270,241 +452,340 @@
       gap: 20px;
     }
     .cert-card {
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      padding: 20px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 22px;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.3s, transform 0.3s;
+    }
+    .cert-card:hover {
+      border-color: var(--glow-purple);
+      transform: translateY(-4px);
     }
     .cert-card h4 {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--blue);
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
       margin-bottom: 8px;
     }
-    .cert-card .cert-cost {
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: var(--orange);
-      margin-bottom: 10px;
+    .cert-cost {
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--glow-purple);
+      margin-bottom: 12px;
+      text-shadow: 0 0 16px rgba(201,125,255,0.5);
     }
     .cert-card ul {
       padding-left: 16px;
-      font-size: 0.85rem;
-      color: #555;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.7;
     }
-    .cert-card ul li { margin-bottom: 4px; }
+    .cert-card ul li { margin-bottom: 2px; }
     .cert-prereq {
-      margin-top: 10px;
-      padding: 8px 10px;
-      background: #f9f9f9;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      color: #666;
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: rgba(201,125,255,0.06);
+      border: 1px solid rgba(201,125,255,0.18);
+      border-radius: 10px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.6;
     }
-    .cert-prereq strong { color: var(--blue); display: block; margin-bottom: 3px; }
+    .cert-prereq strong {
+      display: block;
+      color: var(--glow-purple);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .cost-note {
+      text-align: center;
+      color: rgba(180,200,255,0.35);
+      font-size: 0.75rem;
+      margin-top: 20px;
+    }
 
-    /* ── YouTime strip ── */
-    .youtime {
-      background: linear-gradient(135deg, var(--blue) 0%, #0f2744 100%);
-      color: #fff;
-      padding: 48px 24px;
+    /* ─── YOUTIME SECTION ─── */
+    .youtime-section {
+      position: relative;
+      overflow: hidden;
+      padding: 80px 24px;
       text-align: center;
     }
-    .youtime h2 {
-      font-size: 1.8rem;
-      font-weight: 800;
-      margin-bottom: 8px;
+    .youtime-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(59,142,255,0.1) 0%, transparent 70%);
+      pointer-events: none;
     }
-    .youtime h2 span { color: var(--orange); }
-    .youtime p { opacity: 0.85; max-width: 580px; margin: 0 auto 28px; font-size: 0.95rem; }
-    .youtime-cards {
-      max-width: 800px;
+    .yt-glow-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(59,142,255,0.15);
+      pointer-events: none;
+    }
+    .ring1 { width: 400px; height: 400px; top:50%; left:50%; transform:translate(-50%,-50%); animation: ringPulse 4s ease-in-out infinite; }
+    .ring2 { width: 650px; height: 650px; top:50%; left:50%; transform:translate(-50%,-50%); animation: ringPulse 4s ease-in-out infinite 0.8s; }
+    .ring3 { width: 900px; height: 900px; top:50%; left:50%; transform:translate(-50%,-50%); animation: ringPulse 4s ease-in-out infinite 1.6s; }
+    @keyframes ringPulse {
+      0%,100% { opacity: 0.3; transform: translate(-50%,-50%) scale(1); }
+      50% { opacity: 0.08; transform: translate(-50%,-50%) scale(1.04); }
+    }
+
+    .youtime-inner { position: relative; }
+    .yt-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(59,142,255,0.1);
+      border: 1px solid rgba(59,142,255,0.3);
+      color: var(--glow-blue);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .youtime-section h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+    .youtime-section h2 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--glow-blue), var(--glow-teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .youtime-section > .youtime-inner > p {
+      color: var(--muted);
+      max-width: 500px;
+      margin: 0 auto 40px;
+      font-size: 0.95rem;
+    }
+
+    .yt-cards {
+      max-width: 900px;
       margin: 0 auto;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
     }
-    .youtime-card {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 12px;
-      padding: 18px 16px;
+    .yt-card {
+      background: rgba(59,142,255,0.05);
+      border: 1px solid rgba(59,142,255,0.15);
+      border-radius: 14px;
+      padding: 20px 18px;
       text-align: left;
+      transition: border-color 0.3s, background 0.3s;
     }
-    .youtime-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--orange); }
-    .youtime-card p { font-size: 0.82rem; opacity: 0.8; }
+    .yt-card:hover {
+      border-color: var(--glow-teal);
+      background: rgba(0,229,208,0.05);
+    }
+    .yt-card h4 {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--glow-teal);
+      margin-bottom: 8px;
+    }
+    .yt-card p { font-size: 0.8rem; color: var(--muted); line-height: 1.6; }
 
-    /* ── Footer ── */
+    /* ─── FOOTER ─── */
     footer {
-      background: #111;
-      color: #aaa;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 28px 24px;
       text-align: center;
-      padding: 24px;
-      font-size: 0.82rem;
+      color: rgba(180,200,255,0.3);
+      font-size: 0.78rem;
     }
-    footer strong { color: var(--orange); }
+    footer strong { color: var(--glow-orange); }
 
-    /* ── Responsive tweaks ── */
+    /* ─── RESPONSIVENESS ─── */
     @media (max-width: 600px) {
-      .hero-meta { gap: 20px; }
-      .paths-grid { grid-template-columns: 1fr; }
+      .paths-grid { grid-template-columns: 1fr; gap: 20px; }
+      .hero-stats { gap: 24px; }
     }
   </style>
 </head>
 <body>
 
-<!-- Hero -->
-<header class="hero">
-  <div class="hero-badge">HREE Summit</div>
-  <h1>Reach New Heights in <span>Excellence</span></h1>
-  <p>A business-driven, differentiated upskilling program offering four paths tailored to every HR professional's preferences and bandwidth.</p>
-  <div class="hero-meta">
-    <div class="hero-meta-item"><strong>4</strong><span>Learning Paths</span></div>
-    <div class="hero-meta-item"><strong>13+</strong><span>Certification Paths</span></div>
-    <div class="hero-meta-item"><strong>2</strong><span>Languages</span></div>
-    <div class="hero-meta-item"><strong>YouTime</strong><span>Dedicated Learning Time</span></div>
-  </div>
-</header>
+<!-- Starfield -->
+<canvas id="stars-canvas"></canvas>
 
-<!-- Overview -->
-<div class="overview">
-  <div class="overview-inner">
-    <p>The HREE Upskilling/Reskilling Program is a <strong>differentiated approach</strong> that considers employees' preferences and bandwidth. All paths utilize the <strong>YouTime initiative</strong> — dedicated, meeting-free learning time. Path choice and elements are validated by managers.</p>
-  </div>
-</div>
+<div class="page">
 
-<!-- Path Cards -->
-<div class="section-title">
-  <h2>Choose Your Path</h2>
-  <p>Four distinct journeys from foundational upskilling to advanced business-enabling certifications.</p>
-</div>
-
-<div class="paths-grid">
-
-  <!-- Path 1 -->
-  <div class="path-card">
-    <div class="path-header">
-      <div class="path-number">Path 1 · Basecamp</div>
-      <div class="path-mountain">⛺</div>
-      <h3>Basic HREE Upskilling</h3>
-      <span class="path-duration">⏱ ~2.5 Hours</span>
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="hero-eyebrow">HREE Summit 2024</div>
+    <h1>
+      <span class="line1">Reach New Heights</span>
+      <span class="line2">in Excellence</span>
+    </h1>
+    <p class="hero-sub">
+      A business-driven, differentiated upskilling program — four paths engineered for every HR professional's orbit, bandwidth, and ambition.
+    </p>
+    <div class="hero-stats">
+      <div class="stat"><strong>4</strong><span>Learning Paths</span></div>
+      <div class="stat"><strong>13+</strong><span>Certifications</span></div>
+      <div class="stat"><strong>2</strong><span>Languages</span></div>
+      <div class="stat"><strong>YouTime</strong><span>Dedicated Time</span></div>
     </div>
-    <div class="path-body">
-      <p class="path-desc">Foundational upskilling available to all HREE employees. Auto-enrolled on Orange Learning with both English and French paths.</p>
-      <div class="tag-row">
-        <span class="tag">Strategic Training</span>
-        <span class="tag">Data & AI</span>
-        <span class="tag">Language</span>
-        <span class="tag">Orange Learning</span>
-      </div>
-      <ul class="module-list">
-        <li><strong>Mandatory Training</strong> — e.g. Cyber Ready Visa Compliance, auto-assigned to all.</li>
-        <li><strong>Develop Your Skills</strong> — SVP-related training to bring HR closer to the business (at least 1).</li>
-        <li><strong>Make an Impact</strong> — Strategic topics relevant for HREE today (at least 1).</li>
-        <li><strong>Data & AI Upskilling</strong> — Team group learning: "Understanding Ethical and Responsible Data and AI" + CarnivAI competition.</li>
-        <li><strong>TalkMates</strong> — Buddy language learning initiative; boosts English & French proficiency.</li>
-      </ul>
-      <div class="cost-badge">
-        <span class="label">Investment</span>
-        <span>Included / Auto-enrolled</span>
-      </div>
-    </div>
+    <div class="scroll-hint"><div class="arrow"></div>Explore paths</div>
+  </section>
+
+  <!-- ── OVERVIEW ── -->
+  <div class="overview-band">
+    <p>
+      The HREE Upskilling / Reskilling Program offers a <strong>differentiated approach</strong> considering each employee's preferences and bandwidth.
+      All paths utilize the <strong>YouTime initiative</strong> — dedicated, meeting-free learning blocks. Path choice and certification enrollment are <strong>validated by managers</strong>.
+    </p>
   </div>
 
-  <!-- Path 2 -->
-  <div class="path-card">
-    <div class="path-header">
-      <div class="path-number">Path 2 · K2</div>
-      <div class="path-mountain">🏔</div>
-      <h3>Priority Skills — Lead the Future</h3>
-      <span class="path-duration">⏱ 1–2 Days</span>
-    </div>
-    <div class="path-body">
-      <p class="path-desc">Cohort or self-paced sessions driven by the Lead the Future strategy. Mostly available on Orange Learning in English and French.</p>
-      <div class="tag-row">
-        <span class="tag">Finance Acumen</span>
-        <span class="tag">Change Mgmt</span>
-        <span class="tag">Agile</span>
-        <span class="tag">PM Acculturation</span>
-      </div>
-      <ul class="module-list">
-        <li><strong>Business / Financial Acumen</strong> — World of Finance game (25 min), Philonomist subscription, SVP use cases, entrepreneur mindset.</li>
-        <li><strong>Change Management</strong> — Crucial Influence: 2 × 0.5-day virtual sessions, cohort up to 25.</li>
-        <li><strong>Agile Acculturation</strong> — Step 1: vocabulary & acculturation; Step 2: day-to-day implementation toolkit.</li>
-        <li><strong>PM Acculturation</strong> — Synergy Foundation on Orange Learning.</li>
-      </ul>
-      <div class="cost-badge">
-        <span class="label">Investment</span>
-        <span>Orange Learning (Free)</span>
-      </div>
-    </div>
+  <!-- ── PATH CARDS ── -->
+  <div class="section-head">
+    <h2>Choose Your <span class="glow-word">Path</span></h2>
+    <p>Four distinct journeys — from foundational upskilling to advanced business-enabling certifications.</p>
   </div>
 
-  <!-- Path 3 -->
-  <div class="path-card">
-    <div class="path-header">
-      <div class="path-number">Path 3 · Everest</div>
-      <div class="path-mountain">🏔️</div>
-      <h3>HR Job-Linked Upskilling</h3>
-      <span class="path-duration">⏱ 2–3 Months</span>
-    </div>
-    <div class="path-body">
-      <p class="path-desc">Prescriptive, targeted training based on individual skill gap analysis aligned to your specific HR job role. 13 AIHR certification paths available.</p>
-      <div class="tag-row">
-        <span class="tag">Skill Gap Analysis</span>
-        <span class="tag">AIHR Certification</span>
-        <span class="tag">Job-Linked</span>
-        <span class="tag">Capstone Project</span>
-      </div>
-      <ul class="module-list">
-        <li><strong>Benchmarked Competency Model</strong> — Industry-standard model assessing required HR competencies; mix and level vary by role.</li>
-        <li><strong>Skill Gap Analysis</strong> — Tailored for Global HR BPs, HR Generalists, HR Consultants, Payroll Admins and more.</li>
-        <li><strong>Targeted Learning Path</strong> — Training, tests, guidebooks, templates, case studies, digital learning coach.</li>
-        <li><strong>AIHR Certification</strong> — 13 certification paths; capstone project + exam; large HR professional community.</li>
-      </ul>
-      <div class="cost-badge">
-        <span class="label">Indicative cost / participant</span>
-        <span>~€ 2,000</span>
-      </div>
-    </div>
-  </div>
+  <div class="paths-grid">
 
-  <!-- Path 4 -->
-  <div class="path-card">
-    <div class="path-header">
-      <div class="path-number">Path 4 · The Rockies</div>
-      <div class="path-mountain">🗻</div>
-      <h3>Business Enabling Certifications</h3>
-      <span class="path-duration">⏱ 1 Week – 9+ Months</span>
-    </div>
-    <div class="path-body">
-      <p class="path-desc">High-investment programs that require a contribution back to the business. Choose one certification at a time, approved by your manager.</p>
-      <div class="tag-row">
-        <span class="tag">ICF Coaching</span>
-        <span class="tag">Insights</span>
-        <span class="tag">PMP</span>
-        <span class="tag">SAFe</span>
-        <span class="tag">ISO</span>
+    <!-- PATH 1 -->
+    <div class="path-card" data-path="1">
+      <div class="path-header">
+        <div class="path-num">Path 1 · Basecamp</div>
+        <span class="path-icon">⛺</span>
+        <h3>Basic HREE Upskilling</h3>
+        <span class="path-duration">⏱ ~2.5 Hours</span>
       </div>
-      <ul class="module-list">
-        <li><strong>Coaching Certification (ICF)</strong> — 60h virtual training + 100h coaching experience, cohort of up to 12, service agreement 1 year.</li>
-        <li><strong>Insights Discovery</strong> — 5-day accreditation, commit to 5 workshops post-cert; covers team, sales, leadership & change.</li>
-        <li><strong>PMP / PMI-ACP</strong> — On-demand exam prep; eligibility: 36 months project experience / 21h agile practice.</li>
-        <li><strong>SAFe Certifications</strong> — Jumpstart prerequisite; Leading SAFe; facilitated by LACE team.</li>
-        <li><strong>ISO Certifications</strong> — Chosen in consultation with manager; contact Certification Team to facilitate.</li>
-      </ul>
-      <div class="cost-badge">
-        <span class="label">Indicative cost / participant</span>
-        <span>€ 1,800 – € 6,000</span>
+      <div class="path-body">
+        <p class="path-desc">Foundational upskilling auto-enrolled for all HREE employees on Orange Learning — available in English and French.</p>
+        <div class="tag-row">
+          <span class="tag">Strategic Training</span>
+          <span class="tag">Data & AI</span>
+          <span class="tag">Language</span>
+          <span class="tag">Orange Learning</span>
+        </div>
+        <ul class="module-list">
+          <li><strong>Mandatory Training</strong> — Cyber Ready Visa Compliance; auto-assigned to all employees.</li>
+          <li><strong>Develop Your Skills</strong> — SVP-related training bringing HR closer to the business (at least 1 course).</li>
+          <li><strong>Make an Impact</strong> — Strategic topics relevant for HREE today (at least 1 course).</li>
+          <li><strong>Data & AI Upskilling</strong> — Team learning: "Understanding Ethical & Responsible Data and AI" + CarnivAI competition.</li>
+          <li><strong>TalkMates</strong> — Buddy language initiative boosting English & French proficiency across teams.</li>
+        </ul>
+        <div class="cost-chip">
+          <span class="lbl">Investment</span>
+          <span class="val">Included / Auto-enrolled</span>
+        </div>
       </div>
     </div>
-  </div>
 
-</div><!-- /paths-grid -->
+    <!-- PATH 2 -->
+    <div class="path-card" data-path="2">
+      <div class="path-header">
+        <div class="path-num">Path 2 · K2</div>
+        <span class="path-icon">🏔</span>
+        <h3>Priority Skills — Lead the Future</h3>
+        <span class="path-duration">⏱ 1–2 Days</span>
+      </div>
+      <div class="path-body">
+        <p class="path-desc">Cohort or self-paced sessions driven by the Lead the Future strategy. Mostly on Orange Learning in English and French.</p>
+        <div class="tag-row">
+          <span class="tag">Finance Acumen</span>
+          <span class="tag">Change Mgmt</span>
+          <span class="tag">Agile</span>
+          <span class="tag">PM Acculturation</span>
+        </div>
+        <ul class="module-list">
+          <li><strong>Business / Financial Acumen</strong> — World of Finance (25 min gamified), Philonomist, SVP use cases, entrepreneur mindset.</li>
+          <li><strong>Change Management</strong> — Crucial Influence: 2 × 0.5-day virtual sessions, cohorts up to 25 participants.</li>
+          <li><strong>Agile Acculturation</strong> — Step 1: vocabulary session; Step 2: day-to-day implementation toolkit.</li>
+          <li><strong>PM Acculturation</strong> — Synergy Foundation course on Orange Learning.</li>
+        </ul>
+        <div class="cost-chip">
+          <span class="lbl">Investment</span>
+          <span class="val">Orange Learning (Free)</span>
+        </div>
+      </div>
+    </div>
 
-<!-- Detailed Path 4 certifications -->
-<div class="details-section">
-  <div class="details-inner">
-    <h2>Path 4 — Certification Details</h2>
+    <!-- PATH 3 -->
+    <div class="path-card" data-path="3">
+      <div class="path-header">
+        <div class="path-num">Path 3 · Everest</div>
+        <span class="path-icon">🏔️</span>
+        <h3>HR Job-Linked Upskilling</h3>
+        <span class="path-duration">⏱ 2–3 Months</span>
+      </div>
+      <div class="path-body">
+        <p class="path-desc">Prescriptive training driven by an individual skill gap analysis mapped to your HR job profile. 13 AIHR certification paths available.</p>
+        <div class="tag-row">
+          <span class="tag">Skill Gap Analysis</span>
+          <span class="tag">AIHR Cert.</span>
+          <span class="tag">Job-Linked</span>
+          <span class="tag">Capstone Project</span>
+        </div>
+        <ul class="module-list">
+          <li><strong>Benchmarked Competency Model</strong> — Industry-standard; competency mix and level vary by role.</li>
+          <li><strong>Skill Gap Analysis</strong> — Tailored to Global HR BPs, HR Generalists, HR Consultants, Payroll Admins and more.</li>
+          <li><strong>Targeted Learning Path</strong> — Training modules, tests, guidebooks, templates, case studies, digital learning coach.</li>
+          <li><strong>AIHR Certification</strong> — 13 paths; capstone project + exam; large global HR professional community.</li>
+        </ul>
+        <div class="cost-chip">
+          <span class="lbl">Indicative cost / participant</span>
+          <span class="val">~€ 2,000</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATH 4 -->
+    <div class="path-card" data-path="4">
+      <div class="path-header">
+        <div class="path-num">Path 4 · The Rockies</div>
+        <span class="path-icon">🗻</span>
+        <h3>Business Enabling Certifications</h3>
+        <span class="path-duration">⏱ 1 Week – 9+ Months</span>
+      </div>
+      <div class="path-body">
+        <p class="path-desc">High-investment programs requiring contribution back to the business. One certification at a time, approved by manager.</p>
+        <div class="tag-row">
+          <span class="tag">ICF Coaching</span>
+          <span class="tag">Insights</span>
+          <span class="tag">PMP</span>
+          <span class="tag">SAFe</span>
+          <span class="tag">ISO</span>
+        </div>
+        <ul class="module-list">
+          <li><strong>Coaching Certification (ICF)</strong> — 60h virtual training + 100h coaching experience; cohort up to 12; 1-year service agreement.</li>
+          <li><strong>Insights Discovery</strong> — 5-day accreditation; commit to 5 post-cert workshops; team, sales, leadership & change tracks.</li>
+          <li><strong>PMP / PMI-ACP</strong> — On-demand exam prep; eligibility: 36 months project experience / 21h agile practice.</li>
+          <li><strong>SAFe Certifications</strong> — Jumpstart prerequisite; Leading SAFe; facilitated by internal LACE team.</li>
+          <li><strong>ISO Certifications</strong> — Chosen in consultation with manager; contact Certification Team to facilitate.</li>
+        </ul>
+        <div class="cost-chip">
+          <span class="lbl">Indicative cost / participant</span>
+          <span class="val">€ 1,800 – € 6,000</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /paths-grid -->
+
+  <!-- ── CERT DETAILS ── -->
+  <div class="section-divider"></div>
+  <div class="cert-section">
+    <div class="cert-section-head">
+      <h2>Path 4 — <span style="color:var(--glow-purple)">Certification Details</span></h2>
+      <p>Six high-commitment programs that contribute directly back to the business.</p>
+    </div>
     <div class="cert-grid">
 
       <div class="cert-card">
@@ -512,7 +793,7 @@
         <div class="cert-cost">€ 3,400 / participant*</div>
         <ul>
           <li>60 hours virtual training</li>
-          <li>10 hours mentor coaching (2-3 days F2F)</li>
+          <li>10 hours mentor coaching (2–3 days F2F)</li>
           <li>100 hours coaching experience (75:25 split)</li>
           <li>Cohort-based, up to 12 participants</li>
           <li>Full exam preparation support</li>
@@ -520,7 +801,7 @@
         </ul>
         <div class="cert-prereq">
           <strong>Prerequisites</strong>
-          Min. 5 years HR experience, high empathy/EQ, understanding of coaching principles.
+          Min. 5 years HR experience, high empathy / EQ, understanding of coaching principles.
         </div>
       </div>
 
@@ -535,7 +816,7 @@
         </ul>
         <div class="cert-prereq">
           <strong>Prerequisites</strong>
-          3–5 years facilitation experience, ability to analyze behavioral data, constructive feedback skills.
+          3–5 years facilitation experience, ability to analyse behavioural data, constructive feedback skills.
         </div>
       </div>
 
@@ -571,14 +852,14 @@
         <h4>🚀 SAFe Certifications</h4>
         <div class="cert-cost">Via LACE Team</div>
         <ul>
-          <li>SAFe Jumpstart (prerequisite)</li>
+          <li>SAFe Jumpstart (mandatory prerequisite)</li>
           <li>Leading SAFe — for enterprise adoption leads</li>
           <li>Cohort-based, facilitated by internal SPC teams</li>
-          <li>Strict qualification criteria</li>
+          <li>Strict qualification criteria apply</li>
         </ul>
         <div class="cert-prereq">
           <strong>Note</strong>
-          SAFe Jumpstart is mandatory before Leading SAFe enrollment.
+          SAFe Jumpstart must be completed before Leading SAFe enrollment.
         </div>
       </div>
 
@@ -597,38 +878,160 @@
       </div>
 
     </div>
-    <p style="margin-top:16px; font-size:0.78rem; color:#999; text-align:center;">* All costs are indicative per participant. Travel costs not included unless noted.</p>
+    <p class="cost-note">* All costs are indicative per participant. Travel costs not included unless noted.</p>
   </div>
-</div>
 
-<!-- YouTime -->
-<section class="youtime">
-  <h2><span>YouTime</span> — Dedicated to Your Development</h2>
-  <p>Meeting-free learning blocks twice monthly to scale the HREE Summit and explore the learning methods that work best for you.</p>
-  <div class="youtime-cards">
-    <div class="youtime-card">
-      <h4>📅 Schedule</h4>
-      <p>2nd & 4th Friday (MEAR/EUR) and Wednesday (APAC/AME) of the month — 1-hour blocks.</p>
+  <!-- ── YOUTIME ── -->
+  <section class="youtime-section">
+    <div class="yt-glow-ring ring1"></div>
+    <div class="yt-glow-ring ring2"></div>
+    <div class="yt-glow-ring ring3"></div>
+    <div class="youtime-inner">
+      <div class="yt-badge">✦ Initiative</div>
+      <h2><em>YouTime</em> — Dedicated to Your Development</h2>
+      <p>Meeting-free learning blocks twice monthly — your orbit for growth, reflection, and upskilling across all four paths.</p>
+      <div class="yt-cards">
+        <div class="yt-card">
+          <h4>📅 Schedule</h4>
+          <p>2nd & 4th Friday (MEAR/EUR) and Wednesday (APAC/AME) of the month — 1-hour blocks, calendar-blocked.</p>
+        </div>
+        <div class="yt-card">
+          <h4>🎯 Focus</h4>
+          <p>Prioritize HREE curated learning, or explore podcasts, communities, mentoring, and projects freely.</p>
+        </div>
+        <div class="yt-card">
+          <h4>🏆 Leadership</h4>
+          <p>Leaders champion continuous learning — integrating it into HREE values, strategy, and daily culture.</p>
+        </div>
+        <div class="yt-card">
+          <h4>📊 Tracking</h4>
+          <p>Evolved reporting reflects YouTime activity and learning uptake across the organisation.</p>
+        </div>
+      </div>
     </div>
-    <div class="youtime-card">
-      <h4>🎯 Focus</h4>
-      <p>Prioritize HREE curated learning, or explore podcasts, communities, mentoring, and projects.</p>
-    </div>
-    <div class="youtime-card">
-      <h4>🏆 Leadership</h4>
-      <p>Leaders champion continuous learning by setting the tone, integrating it into HREE values and strategy.</p>
-    </div>
-    <div class="youtime-card">
-      <h4>📊 Tracking</h4>
-      <p>Calendar invites block time for all employees. Reporting reflects YouTime activity and learning uptake.</p>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- Footer -->
-<footer>
-  <p><strong>HREE Upskilling/Reskilling Program</strong> &nbsp;|&nbsp; All path choices and certification enrollment require manager validation. &nbsp;|&nbsp; YouTime is utilized across all paths.</p>
-</footer>
+  <!-- ── FOOTER ── -->
+  <footer>
+    <strong>HREE Upskilling / Reskilling Program</strong> &nbsp;·&nbsp;
+    All path choices and certification enrollment require manager validation &nbsp;·&nbsp;
+    YouTime is utilised across all four paths
+  </footer>
 
+</div><!-- /page -->
+
+<script>
+/* ─── STARFIELD ─── */
+(function() {
+  const canvas = document.getElementById('stars-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  class Star {
+    constructor() { this.reset(); }
+    reset() {
+      this.x  = rand(0, W);
+      this.y  = rand(0, H);
+      this.r  = rand(0.3, 1.6);
+      this.a  = rand(0.2, 1);
+      this.da = rand(-0.004, 0.004);
+      this.vx = rand(-0.08, 0.08);
+      this.vy = rand(-0.04, 0.04);
+    }
+    tick() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.a += this.da;
+      if (this.a < 0.05 || this.a > 1) this.da *= -1;
+      if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(180,210,255,${this.a})`;
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < 280; i++) stars.push(new Star());
+
+  function loop() {
+    ctx.clearRect(0, 0, W, H);
+    stars.forEach(s => { s.tick(); s.draw(); });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ─── FLOATING DEBRIS ─── */
+(function() {
+  const colours = ['#3b8eff','#ff6b1a','#00e676','#c97dff','#00e5d0'];
+  const count = 18;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.classList.add('debris');
+    const size = 3 + Math.random() * 8;
+    el.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}vw;
+      background:${colours[Math.floor(Math.random()*colours.length)]};
+      filter:blur(${Math.random()*2}px);
+      animation-duration:${12 + Math.random()*20}s;
+      animation-delay:${Math.random()*15}s;
+      opacity:0;
+      box-shadow:0 0 ${size*2}px ${colours[Math.floor(Math.random()*colours.length)]};
+    `;
+    document.body.appendChild(el);
+  }
+})();
+
+/* ─── 3D TILT ON PATH CARDS ─── */
+document.querySelectorAll('.path-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const cx   = rect.left + rect.width  / 2;
+    const cy   = rect.top  + rect.height / 2;
+    const dx   = (e.clientX - cx) / (rect.width  / 2);
+    const dy   = (e.clientY - cy) / (rect.height / 2);
+    card.style.transform = `perspective(900px) rotateY(${dx*8}deg) rotateX(${-dy*8}deg) translateZ(6px)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'perspective(900px) rotateY(0deg) rotateX(0deg) translateZ(0px)';
+    card.style.transition = 'transform 0.5s ease, box-shadow 0.35s, border-color 0.35s';
+  });
+  card.addEventListener('mouseenter', () => {
+    card.style.transition = 'transform 0.1s ease, box-shadow 0.35s, border-color 0.35s';
+  });
+});
+
+/* ─── SCROLL FADE-IN ─── */
+(function() {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.path-card, .cert-card, .yt-card').forEach(el => {
+    el.style.opacity    = '0';
+    el.style.transform  = 'translateY(32px)';
+    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease, box-shadow 0.35s, border-color 0.35s';
+    io.observe(el);
+  });
+})();
+</script>
 </body>
 </html>
