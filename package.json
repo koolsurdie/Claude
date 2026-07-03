@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "ruflo": "^3.16.3"
+    "ruflo": "^3.6.30"
+  },
+  "overrides": {
+    "protobufjs": "^7.6.4"
   }
 }
