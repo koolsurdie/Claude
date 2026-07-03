@@ -1,0 +1,8 @@
+{
+  "name": "claude",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "ruflo": "^3.16.3"
+  }
+}
